@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDIBET - L'Élite du Jeu</title>
+    <style>
+        :root { --primary: #f3ba2f; --bg: #0b0e11; --card: #1e2329; --wave: #0096db; --danger: #f6465d; --success: #0ecb81; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding-bottom: 80px; text-align: center; }
+        .nav { background: #1a1d23; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); position: sticky; top: 0; z-index: 100; }
+        .logo-img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--primary); }
+        .balance-box { background: #2b3139; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--primary); font-weight: bold; color: var(--primary); }
+        .container { padding: 10px; max-width: 450px; margin: auto; }
+        .card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 1em; transition: 0.2s; }
+        .btn-bet { background: var(--primary); color: black; }
+        .btn-wave { background: var(--wave); color: white; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(0,150,219,0.7);} 70% {box-shadow: 0 0 0 10px rgba(0,150,219,0);} 100% {box-shadow: 0 0 0 0 rgba(0,150,219,0);} }
+        input { width: 85%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; margin: 5px 0; text-align: center; font-weight: bold; }
+        
+        /* Terrain Penalty */
+        .pitch { position:relative; height:130px; background:#155c2d; border-radius:10px; margin:10px 0; overflow:hidden; border:3px solid white; }
+        #gardien { font-size:3em; position:absolute; bottom:10px; left:42%; transition: 0.3s ease-out; z-index: 2; }
+        #ballon { font-size:1.5em; position:absolute; bottom:5px; left:46%; transition: 0.4s ease-in; display:none; z-index: 3; }
+        
+        /* Grille Mines */
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px auto; }
+        .mine-cell { width: 45px; height: 45px; background: #2b3139; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div><img src="icon.png" class="logo-img"> <span style="font-weight:bold; color:var(--primary); margin-left:5px;">NDIBET</span></div>
+    <div class="balance-box"><span id="solde">2000</span> CFA</div>
+</div>
+
+<div class="container">
+    <div style="margin: 15px 0;">
+        <img src="icon.png" style="width:80px; border-radius:50%; border:2px solid var(--primary);">
+        <p style="color:var(--primary); font-size:0.8em; margin-top:5px; font-weight:bold;">L'ÉLITE DU JEU</p>
+    </div>
+
+    <div class="card">
+        <button class="btn btn-wave" onclick="depotWave()">💳 DÉPÔT RÉEL (WAVE)</button>
+        <button class="btn" style="background:#25d366; color:white;" onclick="retraitWhatsApp()">🟢 RETRAIT WHATSAPP (BOSS)</button>
+    </div>
+
+    <div class="card">
+        <h3>⚽ PENALTY CHALLENGE</h3>
+        <div id="p-stage" style="color:var(--primary); font-weight:bold;">PALIER : 1 (Côte 1.30)</div>
+        <div class="pitch">
+            <div id="gardien">🕴️</div>
+            <div id="ballon">⚽</div>
+        </div>
+        <div id="p-controls" style="display:flex; gap:5px;">
+            <button class="btn btn-bet" onclick="shoot('L')">GAUCHE</button>
+            <button class="btn btn-bet" onclick="shoot('C')">CENTRE</button>
+            <button class="btn btn-bet" onclick="shoot('R')">DROITE</button>
+        </div>
+        <div id="gain-box" style="display:none; background:rgba(0,0,0,0.8); border:2px solid var(--success); padding:10px; border-radius:10px; margin-top:10px;">
+            <h4 style="color:var(--success); margin:0;">BUT !!! 🔥</h4>
+            <p>Gain actuel : <span id="current-win">0</span> CFA</p>
+            <button class="btn" style="background:var(--success); color:white;" onclick="collectPenalty()">ENCAISSER</button>
+            <button class="btn" style="background:var(--primary); color:black;" onclick="nextLevel()">CONTINUER (CÔTE +)</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🚀 CRAX CRASH</h3>
+        <div id="mult" style="font-size:3.5em; color:var(--primary); font-weight:bold;">1.00x</div>
+        <input type="number" id="mise-crash" value="500">
+        <button id="btn-p" class="btn btn-bet" onclick="startCrash()">PARIER</button>
+        <button id="btn-c" class="btn" style="background:var(--success); color:white; display:none;" onclick="cashOut()">ENCAISSER</button>
+    </div>
+
+    <div class="card">
+        <h3>💎 MINES GOLD</h3>
+        <div id="board" class="grid-mines"></div>
+        <button class="btn btn-bet" onclick="startMines()">JOUER (500 CFA)</button>
+    </div>
+
+    <div style="color:#222; margin-top:50px; padding:10px; font-size:0.7em;" onclick="checkAdmin()">[ --- ACCÈS PROPRIÉTAIRE --- ]</div>
+</div>
+
+<script>
+    // --- SYSTÈME DE BASE ---
+    let solde = localStorage.getItem('ndibet_solde') ? parseInt(localStorage.getItem('ndibet_solde')) : 2000;
+    let profitMaison = localStorage.getItem('ndibet_profit') ? parseInt(localStorage.getItem('ndibet_profit')) : 0;
+    function updateUI() { document.getElementById('solde').innerText = solde; localStorage.setItem('ndibet_solde', solde); localStorage.setItem('ndibet_profit', profitMaison); }
+    function vibe(ms = 50) { if(navigator.vibrate) navigator.vibrate(ms); }
+    updateUI();
+
+    // --- PENALTY PRO ---
+    let pLevel = 0; let pMise = 500; let pGain = 0; const cotes = [1.30, 1.50, 1.80, 2.00, 3.00];
+    function shoot(dir) {
+        if(pLevel === 0) { if(solde < pMise) return alert("Solde insuffisant"); solde -= pMise; profitMaison += pMise; pGain = pMise; updateUI(); }
+        const g = document.getElementById('gardien'); const b = document.getElementById('ballon');
+        const pos = { 'L': '10%', 'C': '42%', 'R': '75%' };
+        let botDir = ['L', 'C', 'R'][Math.floor(Math.random() * 3)];
+        b.style.display = 'block'; b.style.left = pos[dir]; b.style.bottom = '80px'; g.style.left = pos[botDir];
+        setTimeout(() => {
+            if(dir === botDir || Math.random() < (pLevel * 0.12)) { vibe(300); alert("ARRÊT DU GARDIEN !"); resetPenaltyGame(); }
+            else { vibe(100); pGain = Math.floor(pGain * cotes[pLevel]); document.getElementById('p-controls').style.display='none'; document.getElementById('gain-box').style.display='block'; document.getElementById('current-win').innerText = pGain; }
+        }, 500);
+    }
+    function nextLevel() { pLevel++; document.getElementById('p-stage').innerText = "PALIER : " + (pLevel+1) + " (Côte " + cotes[pLevel].toFixed(2) + ")"; document.getElementById('p-controls').style.display='flex'; document.getElementById('gain-box').style.display='none'; resetAnim(); }
+    function collectPenalty() { solde += pGain; profitMaison -= (pGain - pMise); alert("Félicitations ! " + pGain + " CFA encaissés."); resetPenaltyGame(); updateUI(); }
+    function resetPenaltyGame() { pLevel=0; pGain=0; document.getElementById('p-stage').innerText="PALIER : 1 (Côte 1.30)"; document.getElementById('p-controls').style.display='flex'; document.getElementById('gain-box').style.display='none'; resetAnim(); }
+    function resetAnim() { const b = document.getElementById('ballon'); b.style.display='none'; b.style.bottom='5px'; b.style.left='46%'; document.getElementById('gardien').style.left='42%'; }
+
+    // --- CRASH ---
+    let cMult = 1.00, cTimer, cTarget, cm;
+    function startCrash() {
+        cm = parseInt(document.getElementById('mise-crash').value); if(cm > solde) return alert("Solde insuffisant");
+        solde -= cm; profitMaison += cm; updateUI(); cMult = 1.00; 
+        cTarget = (Math.random() < 0.12) ? 1.00 : (1.05 + Math.random() * 4).toFixed(2);
+        document.getElementById('btn-p').style.display='none'; document.getElementById('btn-c').style.display='block';
+        cTimer = setInterval(() => { cMult += 0.03; document.getElementById('mult').innerText = cMult.toFixed(2)+"x"; if(cMult >= cTarget) { clearInterval(cTimer); alert("BOUM !"); resetCrash(); } }, 100);
+    }
+    function cashOut() { clearInterval(cTimer); let g = Math.floor(cm * cMult); solde += g; profitMaison -= g; updateUI(); alert("GAGNÉ : "+g); resetCrash(); }
+    function resetCrash() { document.getElementById('btn-p').style.display='block'; document.getElementById('btn-c').style.display='none'; document.getElementById('mult').innerText = "1.00x"; }
+
+    // --- MINES ---
+    function startMines() {
+        if(solde < 500) return alert("Solde insuffisant"); solde -= 500; profitMaison += 500; updateUI();
+        let b = Array.from({length:25},(_,i)=>i).sort(()=>Math.random()-0.5).slice(0,4);
+        const g = document.getElementById('board'); g.innerHTML='';
+        for(let i=0; i<25; i++) {
+            let cell = document.createElement('div'); cell.className='mine-cell'; cell.style.background='#2b3139';
+            cell.onclick = () => { if(b.includes(i)) { cell.innerHTML='💣'; cell.style.background='red'; alert('BOUM !'); g.innerHTML=''; } else { cell.innerHTML='💎'; cell.style.background='green'; solde += 135; profitMaison -= 135; updateUI(); } };
+            g.appendChild(cell);
+        }
+    }
+
+    // --- WHATSAPP & WAVE (PROPRIO : 0707656355) ---
+    function depotWave() { let m = prompt("Montant dépôt :"); if(m>=500) { window.location.href = "https://wave.com/pay/0707656355?amount=" + m; setTimeout(()=>{ solde+=parseInt(m); updateUI(); }, 3000); } }
+    
+    function retraitWhatsApp() {
+        let n = prompt("Ton nom complet :");
+        let amt = prompt("Montant du retrait :");
+        if(n && amt <= solde && amt >= 500) {
+            solde -= parseInt(amt); updateUI();
+            let msg = encodeURIComponent("Salut NDIBET ! Je suis " + n + ". Je souhaite retirer " + amt + " CFA. Voici mon numéro.");
+            window.location.href = "https://wa.me/2250707656355?text=" + msg;
+        } else { alert("Données invalides ou solde insuffisant."); }
+    }
+
+    function checkAdmin() { if(prompt("Code Secret Boss :") === "2026") alert("PROFIT TOTAL MAISON : " + profitMaison + " CFA"); }
+</script>
+</body>
+  </html>
