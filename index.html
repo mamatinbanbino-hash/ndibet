@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDIBET - Ultra Casino</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1e2329; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        .navbar { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
+        .bal-badge { background: var(--card); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: bold; }
+
+        .tabs { display: flex; overflow-x: auto; background: #1c2127; padding: 10px; gap: 15px; border-bottom: 1px solid #333; }
+        .tab { color: #848e9c; font-weight: bold; cursor: pointer; white-space: nowrap; padding-bottom: 5px; }
+        .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+
+        .game-window { max-width: 400px; margin: 15px auto; background: var(--card); border-radius: 15px; padding: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .screen { width: 100%; height: 180px; background: #000; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; border: 2px solid #333; position: relative; }
+        
+        /* ROULETTE UI */
+        #roulette-num { font-size: 4rem; font-weight: bold; transition: 0.2s; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-gold { background: linear-gradient(180deg, #ffcc00, #ff9900); border: none; color: black; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; width: 85%; border: 1px solid var(--gold); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; background: #0b0e11; color: white; border: 1px solid #444; box-sizing: border-box; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; background: #25d366; color: white; text-align: center; padding: 15px; font-weight: bold; text-decoration: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <span style="font-weight: bold;">NDIBET <span style="color: var(--gold);">VOICE</span></span>
+    <div class="bal-badge"><span id="ubal">0</span> F</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="chG('p', this)">⚽ PENALTY</div>
+    <div class="tab" onclick="chG('c', this)">🚀 CRASH</div>
+    <div class="tab" onclick="chG('d', this)">🎲 DÉS</div>
+    <div class="tab" onclick="chG('r', this)">🎡 ROULETTE</div>
+</div>
+
+<div class="game-window">
+    <div class="screen">
+        <div id="u-p">⚽<br>Visez le but</div>
+        <div id="u-c" style="display:none; color:var(--green); font-size:2.5rem;">1.00x</div>
+        <div id="u-d" style="display:none; font-size:3rem;">🎲</div>
+        <div id="u-r" style="display:none;"><span id="roulette-num">0</span></div>
+    </div>
+
+    <div id="c-p" class="btn-grid">
+        <button class="btn-gold" onclick="play('p')">GAUCHE</button>
+        <button class="btn-gold" onclick="play('p')">DROITE</button>
+    </div>
+
+    <div id="c-c" style="display:none;">
+        <button id="btn-crash" class="btn-gold" onclick="play('c')">MISER 500F</button>
+    </div>
+
+    <div id="c-d" style="display:none;">
+        <button class="btn-gold" onclick="play('d')">LANCER LES DÉS</button>
+    </div>
+
+    <div id="c-r" style="display:none;">
+        <input type="number" id="r-choice" placeholder="Numéro choisi (0-36)" max="36" min="0">
+        <button class="btn-gold" onclick="play('r')">TOURNER LA ROULETTE (500F)</button>
+    </div>
+
+    <div style="margin-top: 15px;">
+        <button onclick="opM('depot')" style="background:#2d66ff; border:none; color:white; padding:10px; border-radius:5px; width:48%;">DÉPÔT</button>
+        <button onclick="opM('retrait')" style="background:#444; border:none; color:white; padding:10px; border-radius:5px; width:48%;">RETRAIT</button>
+    </div>
+    <p id="msg" style="color:var(--gold); font-weight:bold; margin-top:10px;"></p>
+</div>
+
+<div id="pop" class="modal">
+    <div class="modal-content">
+        <h3 id="p-titre">ACTION</h3>
+        <input type="text" id="p-nom" placeholder="Nom">
+        <input type="number" id="p-tel" placeholder="Numéro">
+        <input type="number" id="p-mont" placeholder="Montant">
+        <button class="btn-gold" onclick="valider()">CONFIRMER</button>
+        <button onclick="clM()" style="background:none; border:none; color:gray; margin-top:15px; width:100%;">Fermer</button>
+    </div>
+</div>
+
+<a href="https://wa.me/2250707656355" class="footer">WHATSAPP BOSS : 0707656355</a>
+
+<script>
+    let bal = 0;
+    let isC = false;
+    let cV = 1.0;
+    let cInt;
+
+    function parler(texte) {
+        let synthe = window.speechSynthesis;
+        let énoncé = new SpeechSynthesisUtterance(texte);
+        énoncé.lang = 'fr-FR';
+        énoncé.rate = 1;
+        synthe.speak(énoncé);
+    }
+
+    function chG(g, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        ['p','c','d','r'].forEach(x => {
+            document.getElementById('u-'+x).style.display = (x === g ? 'block' : 'none');
+            document.getElementById('c-'+x).style.display = (x === g ? 'block' : 'none');
+            if (g === 'c') document.getElementById('u-c').style.display = 'flex';
+        });
+    }
+
+    function play(type) {
+        if(bal < 500 && type !== 'p') { parler("Solde insuffisant Boss. Faites un dépôt."); return; }
+        let m = document.getElementById('msg');
+
+        if(type === 'p') {
+            let w = Math.random() > 0.5;
+            bal += w ? 500 : -200;
+            m.innerText = w ? "BUT !!!" : "ARRÊTÉ !";
+            parler(w ? "Incroyable but ! Vous gagnez." : "Le gardien l'a capté. Dommage.");
+        } 
+        else if(type === 'd') {
+            let d = Math.floor(Math.random()*6)+1;
+            document.getElementById('u-d').innerText = "🎲 " + d;
+            if(d > 3) { bal += 500; parler("Le dé affiche "+d+". C'est gagné !"); }
+            else { bal -= 500; parler("Le dé affiche "+d+". Vous avez perdu."); }
+        }
+        else if(type === 'r') {
+            let choix = document.getElementById('r-choice').value;
+            if(choix === "" || choix > 36) { parler("Choisissez un numéro entre zéro et 36."); return; }
+            let res = Math.floor(Math.random()*37);
+            document.getElementById('roulette-num').innerText = res;
+            if(parseInt(choix) === res) {
+                bal += 500 * 35;
+                parler("Le numéro gagnant est le "+res+". Jackpot ! Trente cinq fois votre mise !");
+            } else {
+                bal -= 500;
+                parler("Le numéro était le "+res+". Retentez votre chance.");
+            }
+        }
+        else if(type === 'c') { handleC(); }
+        
+        document.getElementById('ubal').innerText = bal;
+    }
+
+    function handleC() {
+        let b = document.getElementById('btn-crash');
+        if(!isC) {
+            isC = true; cV = 1.0; b.innerText = "CASH OUT";
+            parler("L'avion décolle !");
+            let boom = (Math.random()*4 + 1.1).toFixed(2);
+            cInt = setInterval(() => {
+                cV += 0.1; document.getElementById('u-c').innerText = cV.toFixed(2) + "x";
+                if(cV >= boom) {
+                    clearInterval(cInt); isC = false; b.innerText = "BOOM !";
+                    bal -= 500; document.getElementById('ubal').innerText = bal;
+                    parler("L'avion a explosé.");
+                }
+            }, 100);
+        } else {
+            clearInterval(cInt); isC = false;
+            let gain = Math.floor(500 * cV);
+            bal += gain; document.getElementById('ubal').innerText = bal;
+            b.innerText = "MISER 500F";
+            parler("Bien joué ! Vous encaissez " + gain + " francs.");
+        }
+    }
+
+    function opM(a) { document.getElementById('pop').style.display='flex'; document.getElementById('p-titre').innerText = a.toUpperCase(); }
+    function clM() { document.getElementById('pop').style.display='none'; }
+    function valider() {
+        let txt = `NDIBET - ${document.getElementById('p-titre').innerText}%0ANom: ${document.getElementById('p-nom').value}%0ATel: ${document.getElementById('p-tel').value}%0AMontant: ${document.getElementById('p-mont').value}F`;
+        window.location.href = `https://wa.me/2250707656355?text=${txt}`;
+    }
+</script>
+</body>
+</html>
