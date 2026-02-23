@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élite Play - Officiel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --red: #FF0000; --white: #FFFFFF; --dark: #1a1a1a; --gray: #f4f4f4; }
+        body { font-family: 'Arial', sans-serif; background: var(--white); margin: 0; color: var(--dark); overflow-x: hidden; }
+        
+        /* Navigation */
+        header { background: var(--red); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+        
+        /* Layout */
+        .container { max-width: 800px; margin: auto; padding: 15px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
+        .hidden { display: none; }
+        
+        /* Boutons */
+        .btn { border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; font-size: 16px; }
+        .btn-red { background: var(--red); color: white; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #ccc; margin-top: 10px; }
+        .btn-back { background: #666; color: white; margin-bottom: 15px; width: auto; padding: 8px 15px; }
+
+        /* Jeux Elements */
+        .screen { background: #000; height: 180px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-size: 40px; font-weight: bold; margin-bottom: 15px; position: relative; }
+        .history-bar { background: #eee; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; }
+        
+        /* Grille Mine */
+        .mine-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #eee; border: none; border-radius: 8px; font-size: 20px; cursor: pointer; }
+        .cell.safe { background: #d4edda; color: #155724; }
+        .cell.bomb { background: #f8d7da; color: #721c24; }
+
+        /* Boss Panel */
+        #boss-panel { background: #111; color: #00FF00; border: 2px solid #333; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        .stat-box { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">ÉLITE PLAY</div>
+    <div id="header-balance" class="hidden">0 FCFA</div>
+    <button class="btn" style="width:auto; padding:5px 10px; font-size:12px;" onclick="checkBoss()">BOSS99</button>
+</header>
+
+<div class="container">
+
+    <div id="view-auth" class="card">
+        <h2 style="text-align:center; color:var(--red);">Accès Membre</h2>
+        <input type="text" id="reg-pseudo" placeholder="Pseudo obligatoire">
+        <input type="tel" id="reg-phone" placeholder="Numéro de téléphone obligatoire">
+        <button class="btn btn-red" onclick="startApp()">S'INSCRIRE & JOUER</button>
+        <p style="font-size:11px; color:#666; text-align:center; margin-top:10px;">En vous inscrivant, vous recevez 500 FCFA chaque Vendredi.</p>
+    </div>
+
+    <div id="view-menu" class="hidden">
+        <div class="card" onclick="showGame('aviator')" style="cursor:pointer; border-left: 5px solid red;">
+            <h3>✈️ AVIATOR</h3>
+            <p style="font-size:13px; color:#666;">Multipliez votre mise en temps réel.</p>
+        </div>
+        <div class="card" onclick="showGame('mines')" style="cursor:pointer; border-left: 5px solid red;">
+            <h3>💣 MINES</h3>
+            <p style="font-size:13px; color:#666;">Évitez les 5 pièges pour gagner.</p>
+        </div>
+        <div class="card" onclick="showView('view-wallet')" style="cursor:pointer; border-left: 5px solid #28a745;">
+            <h3>💳 PORTEFEUILLE</h3>
+            <p style="font-size:13px; color:#666;">Recharge Wave, Tickets et Retraits.</p>
+        </div>
+    </div>
+
+    <div id="view-aviator" class="hidden">
+        <button class="btn btn-back" onclick="showView('view-menu')">← Retour</button>
+        <div class="card">
+            <div class="history-bar" id="av-history">Historique: </div>
+            <div class="screen" id="av-screen">x1.00</div>
+            <div class="stat-box">
+                <span>Progression: <strong id="av-progression">0 FCFA</strong></span>
+            </div>
+            <input type="number" id="av-bet" value="50" min="50" max="10000" placeholder="Mise (50 - 10,000)">
+            <div style="display:flex; gap:10px; margin-bottom:10px; font-size:12px;">
+                <label><input type="checkbox" id="av-auto-bet"> Auto Pari</label>
+                <label><input type="checkbox" id="av-auto-cash"> Auto Retrait (x2.0)</label>
+            </div>
+            <button id="btn-av-start" class="btn btn-red" onclick="runAviator()">PARIER</button>
+            <button id="btn-av-cash" class="btn btn-green hidden" onclick="cashoutAviator()">ENCAISSER</button>
+        </div>
+    </div>
+
+    <div id="view-mines" class="hidden">
+        <button class="btn btn-back" onclick="showView('view-menu')">← Retour</button>
+        <div class="card">
+            <h3 style="margin-top:0;">MINES (5 PIÈGES)</h3>
+            <canvas id="mineChart" style="max-height: 80px; margin-bottom:10px;"></canvas>
+            <div class="mine-grid" id="mine-board"></div>
+            <div class="stat-box">
+                <span>Côte: <strong id="mine-cote">x1.00</strong></span>
+                <span>Gain potentiel: <strong id="mine-gain">0 FCFA</strong></span>
+            </div>
+            <button class="btn btn-outline" onclick="randomMine()">SÉLECTION ALÉATOIRE</button>
+            <button class="btn btn-green" style="margin-top:10px;" onclick="cashoutMines()">ENCAISSER</button>
+        </div>
+    </div>
+
+    <div id="view-wallet" class="hidden">
+        <button class="btn btn-back" onclick="showView('view-menu')">← Retour</button>
+        <div class="card">
+            <h3>Dépôt Rapide</h3>
+            <p style="font-size:13px;">Dépôt Wave au <strong>0707656355</strong> (Propriétaire)</p>
+            <button class="btn btn-green" onclick="contactWa('Preuve de dépôt Wave')">Envoyer preuve via WhatsApp</button>
+            <hr>
+            <input type="text" id="ticket-input" placeholder="Coller code ticket (10 min)">
+            <button class="btn btn-red" onclick="rechargeTicket()">RECHARGER PAR TICKET</button>
+        </div>
+        <div class="card">
+            <h3>Retrait</h3>
+            <input type="number" id="withdraw-amt" placeholder="Montant minimal 500">
+            <button class="btn btn-red" onclick="processWithdraw()">RETIRER TOUT & VIDER</button>
+            <p id="withdraw-msg" style="font-size:11px; color:red; margin-top:5px;"></p>
+        </div>
+    </div>
+
+    <div id="view-boss" class="hidden card" style="background:#111; color:#0f0;">
+        <button class="btn btn-back" onclick="showView('view-menu')">← Retour</button>
+        <h2>PANEL BOSS99</h2>
+        <p>Argent Fictif: <strong style="color:white;">ILLIMITÉ</strong></p>
+        <div style="border:1px solid #333; padding:10px; margin-bottom:10px;">
+            <h4>Générer Ticket</h4>
+            <button class="btn btn-green" onclick="generateTicketBoss()">Créer code 10 min</button>
+            <p id="last-ticket" style="font-family:monospace; margin-top:5px;"></p>
+        </div>
+        <div style="border:1px solid #333; padding:10px;">
+            <h4>Registre des Inscrits</h4>
+            <div id="registre-list" style="font-size:12px; max-height:150px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Variables Globales
+    let balance = 0;
+    let currentUser = { pseudo: "", phone: "" };
+    let users = [];
+    let currentCote = 1.0;
+    let avInterval;
+    let minesActive = false;
+    let mineCote = 1.0;
+    let bombs = [];
+    let activeBet = 0;
+
+    // Navigation
+    function showView(viewId) {
+        document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function startApp() {
+        const p = document.getElementById('reg-pseudo').value;
+        const tel = document.getElementById('reg-phone').value;
+        if(!p || !tel) return alert("Veuillez remplir tous les champs");
+        
+        currentUser = { pseudo: p, phone: tel };
+        users.push(currentUser);
+        document.getElementById('header-balance').classList.remove('hidden');
+        showView('view-menu');
+    }
+
+    // --- AVIATOR LOGIC ---
+    function runAviator() {
+        activeBet = parseFloat(document.getElementById('av-bet').value);
+        if(activeBet < 50 || activeBet > 10000) return alert("Mise invalide");
+        
+        currentCote = 1.0;
+        document.getElementById('btn-av-start').classList.add('hidden');
+        document.getElementById('btn-av-cash').classList.remove('hidden');
+        
+        avInterval = setInterval(() => {
+            currentCote += 0.03;
+            document.getElementById('av-screen').innerText = 'x' + currentCote.toFixed(2);
+            document.getElementById('av-progression').innerText = Math.floor(activeBet * currentCote) + " FCFA";
+            
+            // Auto Cashout
+            if(document.getElementById('av-auto-cash').checked && currentCote >= 2.0) {
+                cashoutAviator();
+            }
+
+            // Algorithme 65% perte
+            if(Math.random() < 0.03) {
+                clearInterval(avInterval);
+                document.getElementById('av-screen').innerText = "PARTI !";
+                document.getElementById('av-history').innerHTML += `<span style="color:red; margin-right:5px;">${currentCote.toFixed(2)}</span>`;
+                setTimeout(() => {
+                    document.getElementById('btn-av-start').classList.remove('hidden');
+                    document.getElementById('btn-av-cash').classList.add('hidden');
+                    if(document.getElementById('av-auto-bet').checked) runAviator();
+                }, 2000);
+            }
+        }, 100);
+    }
+
+    function cashoutAviator() {
+        clearInterval(avInterval);
+        alert("Gagné! " + Math.floor(activeBet * currentCote) + " FCFA");
+        resetAviator();
+    }
+
+    function resetAviator() {
+        document.getElementById('btn-av-start').classList.remove('hidden');
+        document.getElementById('btn-av-cash').classList.add('hidden');
+        document.getElementById('av-screen').innerText = "x1.00";
+    }
+
+    // --- MINES LOGIC ---
+    function showGame(game) {
+        if(game === 'mines') {
+            initMines();
+            showView('view-mines');
+        } else {
+            showView('view-aviator');
+        }
+    }
+
+    function initMines() {
+        const board = document.getElementById('mine-board');
+        board.innerHTML = '';
+        bombs = [];
+        mineCote = 1.0;
+        activeBet = 50; // Mise fixe pour l'exemple
+        
+        // Placer 5 pièges
+        while(bombs.length < 5) {
+            let r = Math.floor(Math.random() * 25);
+            if(!bombs.includes(r)) bombs.push(r);
+        }
+
+        for(let i=0; i<25; i++) {
+            let btn = document.createElement('button');
+            btn.className = 'cell';
+            btn.onclick = () => revealCell(btn, i);
+            board.appendChild(btn);
+        }
+    }
+
+    function revealCell(btn, idx) {
+        if(bombs.includes(idx)) {
+            btn.classList.add('bomb');
+            btn.innerText = '💣';
+            alert("BOUM ! Perdu.");
+            initMines();
+        } else {
+            btn.classList.add('safe');
+            btn.innerText = '💎';
+            btn.onclick = null;
+            // Côte évolue selon les pièges (5 pièges = montée rapide)
+            mineCote += 0.45;
+            document.getElementById('mine-cote').innerText = 'x' + mineCote.toFixed(2);
+            document.getElementById('mine-gain').innerText = Math.floor(50 * mineCote) + " FCFA";
+        }
+    }
+
+    function randomMine() {
+        let cells = document.querySelectorAll('.cell:not(.safe)');
+        let rand = Math.floor(Math.random() * cells.length);
+        cells[rand].click();
+    }
+
+    function cashoutMines() {
+        alert("Encaissé : " + document.getElementById('mine-gain').innerText);
+        initMines();
+    }
+
+    // --- WALLET & RETRAITS ---
+    function processWithdraw() {
+        let amt = parseFloat(document.getElementById('withdraw-amt').value);
+        if(amt < 500) return alert("Minimum 500 FCFA");
+        
+        let frais = (amt >= 5000) ? (amt * 0.05) : 0;
+        let final = amt - frais;
+        
+        document.getElementById('withdraw-msg').innerText = `Vidage automatique... Frais: ${frais} FCFA. Net: ${final} FCFA`;
+        
+        // Capture auto vers WhatsApp
+        setTimeout(() => {
+            window.location.href = `https://wa.me/2250707656355?text=Élite Play RETRAIT : ${amt} FCFA. Frais: ${frais}. Pseudo: ${currentUser.pseudo}`;
+        }, 1500);
+    }
+
+    // --- BOSS99 ADMINISTRATION ---
+    function checkBoss() {
+        let code = prompt("Entrez le code BOSS99 :");
+        if(code === "BOSS99") {
+            updateRegistre();
+            showView('view-boss');
+        } else {
+            alert("Accès refusé");
+        }
+    }
+
+    function generateTicketBoss() {
+        let ticket = "EP-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+        document.getElementById('last-ticket').innerText = "Ticket (10min) : " + ticket;
+    }
+
+    function updateRegistre() {
+        let list = document.getElementById('registre-list');
+        list.innerHTML = users.map(u => `<div>👤 ${u.pseudo} - 📞 ${u.phone}</div>`).join('');
+    }
+
+    function contactWa(msg) {
+        window.location.href = `https://wa.me/2250707656355?text=${msg} (${currentUser.pseudo})`;
+    }
+
+</script>
+
+</body>
+</html>
