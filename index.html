@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BADBOYSOLITAIRE 😈</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; user-select: none; }
+        .header { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 900; }
+        .admin-lock { border: 1px solid var(--gold); padding: 5px 12px; border-radius: 8px; cursor: pointer; background: rgba(255,204,0,0.05); }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.2rem; }
+        .tabs { display: flex; background: #1c2127; border-bottom: 1px solid #333; overflow-x: auto; }
+        .tab { flex: 1; min-width: 90px; padding: 12px 5px; text-align: center; color: #848e9c; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(255,204,0,0.1); }
+        .game-area { max-width: 420px; margin: 0 auto; padding: 10px; }
+        .sport-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #333; text-align: left; }
+        .odds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+        .odd-item { background: #2b3139; border: 1px solid #444; border-radius: 6px; padding: 8px 2px; text-align: center; cursor: pointer; }
+        .odd-item.active { background: var(--gold); color: black; }
+        .odd-val { font-weight: 900; font-size: 0.9rem; display: block; }
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #2b3139; border-radius: 8px; border: none; font-size: 1.4rem; box-shadow: 0 4px 0 #000; }
+        .btn-main { background: linear-gradient(180deg, #ffcc00, #ff9900); border: none; color: black; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; }
+        .footer { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; padding: 15px 0; border-top: 2px solid #333; z-index: 1000; }
+        .btn-wa { background: var(--green); color: black; padding: 10px 15px; border-radius: 10px; font-weight: bold; border: none; font-size: 0.8rem; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: #1c2127; border: 2px solid var(--gold); padding: 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; overflow-y: auto; max-height: 85vh; }
+        .bet-slip { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); width: 90%; background: #161a1e; border: 2px solid var(--gold); border-radius: 15px; padding: 15px; z-index: 1500; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="authModal">
+    <div class="modal-box">
+        <h2 style="color:var(--gold);">BADBOY<span style="color:white">SOLITAIRE 😈</span></h2>
+        <input type="text" id="pseudoInput" placeholder="Ton Pseudo" style="width:100%; padding:15px; box-sizing:border-box; margin-bottom:15px; border-radius:10px;">
+        <button class="btn-main" onclick="createAccount()">OUVRIR LE COMPTE</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <span onclick="hidePanel()" style="float:right; cursor:pointer;">X</span>
+        <div id="admin-login">
+            <h3>BOSS PANEL 😈</h3>
+            <input type="password" id="adminInput" placeholder="Code secret" style="width:100%; padding:10px; box-sizing:border-box; margin-bottom:10px;">
+            <button class="btn-main" onclick="checkCode()">ENTRER</button>
+        </div>
+        <div id="boss-menu" style="display:none;">
+            <button class="btn-main" style="margin-bottom:10px;" onclick="bossTicket()">🎟️ GÉNÉRER TICKET</button>
+            <button class="btn-main" style="margin-bottom:10px; background:white;" onclick="showAdminBets()">⚽ VALIDER PARIS</button>
+            <button class="btn-main" style="background:var(--red); color:white;" onclick="bossGodMode()">🔥 MODE INF</button>
+        </div>
+        <div id="admin-bet-list" style="display:none; text-align:left; font-size:0.75rem; margin-top:15px;"></div>
+    </div>
+</div>
+
+<div class="header">
+    <div class="admin-lock" onclick="showPanel()"><span id="player-id" style="font-size:0.7rem; color:gray;">ID: ...</span></div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="setGame('mines')">💣 Mines</div>
+    <div class="tab" onclick="setGame('sports')">⚽ Sports</div>
+    <div class="tab" onclick="setGame('mybets')">📑 Mes Paris</div>
+</div>
+
+<div class="game-area">
+    <div id="area-mines">
+        <div style="background:rgba(0,255,136,0.1); border:1px solid var(--green); border-radius:10px; padding:10px; margin-bottom:10px; text-align:center;">
+            GAIN ACTUEL: <span id="mine-pot" style="color:var(--green); font-weight:bold;">0 F</span>
+        </div>
+        <div id="grid-mines" class="grid-mines"></div>
+        <button class="btn-main" id="btn-start-mines" onclick="playMines()">JOUER (100F)</button>
+        <button class="btn-main" id="btn-cash-mines" style="display:none; background:var(--green);" onclick="cashOutMines()">ENCAISSER</button>
+    </div>
+
+    <div id="area-sports" style="display:none;">
+        <h4 style="color:var(--gold);">PRO LEAGUE ⚽</h4>
+        <div id="matches-list"></div>
+    </div>
+
+    <div id="area-mybets" style="display:none; text-align:left;">
+        <h4 style="text-align:center;">HISTORIQUE TICKETS</h4>
+        <div id="tickets-history"></div>
+    </div>
+</div>
+
+<div class="bet-slip" id="slip">
+    <div id="slip-items" style="font-size:0.8rem; margin-bottom:10px;"></div>
+    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:10px;">
+        <span>CÔTE:</span> <span id="slip-total-odds" style="color:var(--gold);">1.00</span>
+    </div>
+    <input type="number" id="mise-sport" value="90" oninput="updateSlipGain()" style="width:100%; padding:10px; box-sizing:border-box; border-radius:8px; text-align:center; margin-bottom:10px;">
+    <button class="btn-main" onclick="placeSportBet()">VALIDER (Gain: <span id="slip-potential">0</span>F)</button>
+    <button onclick="toggleSlip()" style="width:100%; background:none; border:none; color:var(--red); margin-top:10px;">ANNULER</button>
+</div>
+
+<div class="footer">
+    <button class="btn-wa" onclick="goWa('depot')">DÉPÔT</button>
+    <button class="btn-wa" onclick="claimBonus()" style="background:var(--gold);">🎁 BONUS</button>
+    <button class="btn-wa" style="background:var(--red); color:white" onclick="goWa('retrait')">RETRAIT</button>
+</div>
+
+<script>
+    let bal = 0, active = false, isBoss = false, currentUser = localStorage.getItem('bad_user'), uid = localStorage.getItem('bad_id');
+    let coupon = [], matches = [], minePot = 0, mineTraps = [], minesOpened = 0, fishLossCount = 0;
+
+    if(!currentUser) document.getElementById('authModal').style.display='flex';
+    function createAccount() {
+        let p = document.getElementById('pseudoInput').value.trim();
+        if(p.length < 3) return alert("Pseudo court");
+        uid = "BAD-"+Math.floor(1000+Math.random()*9000);
+        localStorage.setItem('bad_user', p); localStorage.setItem('bad_id', uid);
+        location.reload();
+    }
+    document.getElementById('player-id').innerText = "ID: " + uid;
+
+    const teams = ["PSG", "Marseille", "Real Madrid", "Barça", "Chelsea", "Arsenal", "Man City", "Liverpool"];
+    function initSports() {
+        matches = [];
+        for(let i=0; i<4; i++) {
+            matches.push({ id: i, t1: teams[i*2], t2: teams[i*2+1], odds: {"1": (Math.random()*2+1.2).toFixed(2), "N": (Math.random()*1+2.5).toFixed(2), "2": (Math.random()*2+1.5).toFixed(2)} });
+        }
+    }
+    initSports();
+
+    function setGame(g) {
+        document.getElementById('area-mines').style.display = g==='mines'?'block':'none';
+        document.getElementById('area-sports').style.display = g==='sports'?'block':'none';
+        document.getElementById('area-mybets').style.display = g==='mybets'?'block':'none';
+        if(g==='sports') renderSports();
+        if(g==='mybets') renderMyBets();
+    }
+
+    // --- MINES LOI 30% ---
+    const gm = document.getElementById('grid-mines');
+    for(let i=0; i<25; i++) { 
+        let b = document.createElement('button'); b.className = 'cell'; 
+        b.onclick = () => hitMine(i, b); gm.appendChild(b); 
+    }
+    function playMines() {
+        if(bal < 100 && !isBoss) return alert("100F mini");
+        if(!isBoss) bal -= 100; ui(); active = true; minesOpened = 0; minePot = 100;
+        document.getElementById('btn-start-mines').style.display='none';
+        document.getElementById('btn-cash-mines').style.display='block';
+        mineTraps = []; while(mineTraps.length < 3) { let r = Math.floor(Math.random()*25); if(!mineTraps.includes(r)) mineTraps.push(r); }
+        document.querySelectorAll('.cell').forEach(c => { c.innerText=''; c.style.background='#2b3139'; c.dataset.open="false"; });
+        updateMinePot();
+    }
+    function hitMine(i, b) {
+        if(!active || b.dataset.open === "true") return;
+        if(mineTraps.includes(i) || Math.random() < 0.70) {
+            b.style.background = 'var(--red)'; b.innerText = '💣'; active = false; 
+            setTimeout(() => { document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; updateMinePot(0); }, 1500);
+        } else {
+            minesOpened++; b.dataset.open="true"; b.style.background='var(--green)'; b.innerText='💎';
+            minePot = Math.floor(minePot * 1.4); updateMinePot();
+        }
+    }
+    function cashOutMines() { bal += minePot; active = false; document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; updateMinePot(0); ui(); }
+    function updateMinePot(val) { document.getElementById('mine-pot').innerText = (val !== undefined ? val : minePot) + " F"; }
+
+    // --- SPORTS RENDER ---
+    function renderSports() {
+        const list = document.getElementById('matches-list'); list.innerHTML = '';
+        matches.forEach(m => {
+            list.innerHTML += `<div class="sport-card">
+                <b>${m.t1} vs ${m.t2}</b>
+                <div class="odds-grid">
+                    <div class="odd-item" onclick="selectOdd(${m.id}, '1', ${m.odds['1']})">1: ${m.odds['1']}</div>
+                    <div class="odd-item" onclick="selectOdd(${m.id}, 'N', ${m.odds['N']})">N: ${m.odds['N']}</div>
+                    <div class="odd-item" onclick="selectOdd(${m.id}, '2', ${m.odds['2']})">2: ${m.odds['2']}</div>
+                </div>
+            </div>`;
+        });
+    }
+
+    function selectOdd(matchId, label, val) {
+        const m = matches.find(x => x.id === matchId);
+        coupon = coupon.filter(x => x.matchId !== matchId);
+        coupon.push({ matchId, name: `${m.t1} vs ${m.t2}`, label, val });
+        document.getElementById('slip').style.display = 'block';
+        updateSlipUI();
+    }
+
+    function updateSlipUI() {
+        const items = document.getElementById('slip-items'); items.innerHTML = '';
+        let total = 1.00; coupon.forEach(c => { items.innerHTML += `<div>${c.name} (${c.label} @${c.val})</div>`; total *= c.val; });
+        document.getElementById('slip-total-odds').innerText = total.toFixed(2);
+        updateSlipGain();
+    }
+
+    function updateSlipGain() {
+        let m = parseInt(document.getElementById('mise-sport').value) || 0;
+        let t = parseFloat(document.getElementById('slip-total-odds').innerText);
+        document.getElementById('slip-potential').innerText = Math.floor(m * t);
+    }
+
+    function placeSportBet() {
+        let m = parseInt(document.getElementById('mise-sport').value);
+        if(m < 90) return alert("Mise 90F mini");
+        if(bal < m && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= m;
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]");
+        tks.push({ id: Date.now(), uid, pseudo: currentUser, items: coupon, mise: m, odds: document.getElementById('slip-total-odds').innerText, status: 'En attente' });
+        localStorage.setItem('bad_tks', JSON.stringify(tks));
+        coupon = []; document.getElementById('slip').style.display = 'none'; ui(); alert("Ticket validé ! 😈");
+    }
+
+    function renderMyBets() {
+        const hist = document.getElementById('tickets-history'); hist.innerHTML = '';
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]").filter(x => x.uid === uid).reverse();
+        tks.forEach(t => { hist.innerHTML += `<div style="background:var(--card); padding:10px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--gold)">Ticket #${t.id.toString().slice(-4)} - ${t.status}<br><small>${t.mise}F -> ${Math.floor(t.mise*t.odds)}F</small></div>`; });
+    }
+
+    function showAdminBets() {
+        document.getElementById('boss-menu').style.display='none'; document.getElementById('admin-bet-list').style.display='block';
+        const list = document.getElementById('admin-bet-list'); list.innerHTML = '<h4>VALIDER</h4>';
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]").filter(x => x.status === 'En attente');
+        tks.forEach(t => {
+            list.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:5px;"><b>${t.pseudo} (${t.mise}F)</b><br>
+                <button onclick="resolveBet(${t.id}, 'Gagné')" style="color:green">GAGNÉ</button>
+                <button onclick="resolveBet(${t.id}, 'Perdu')" style="color:red">PERDU</button>
+            </div>`;
+        });
+    }
+    function resolveBet(id, s) {
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]");
+        let t = tks.find(x => x.id === id);
+        if(t) { t.status = s; if(s === 'Gagné' && t.uid === uid) bal += Math.floor(t.mise * t.odds); localStorage.setItem('bad_tks', JSON.stringify(tks)); ui(); showAdminBets(); }
+    }
+
+    function ui() { document.getElementById('solde').innerText = isBoss ? "BOSS" : bal; }
+    function claimBonus() { let d = new Date(); if(d.getDay()!==5) return alert("Vendredi !"); bal+=500; ui(); alert("+500F"); }
+    function showPanel() { document.getElementById('adminModal').style.display='flex'; }
+    function hidePanel() { document.getElementById('adminModal').style.display='none'; }
+    function checkCode() { if(document.getElementById('adminInput').value === "BOSS99") { document.getElementById('admin-login').style.display='none'; document.getElementById('boss-menu').style.display='block'; } }
+    function bossTicket() { let m = prompt("Montant :"); if(m) alert("BAD-"+m+"-"+(Date.now()+600000).toString(36)+"-Z"); }
+    function bossGodMode() { isBoss=true; ui(); hidePanel(); }
+    function toggleSlip() { document.getElementById('slip').style.display = 'none'; coupon = []; }
+
+    function goWa(t) {
+        let num = "2250707656355";
+        if(t==='retrait') {
+            if(bal < 1000) return alert("1000F mini");
+            let m=bal, net=m>=5000?m*0.95:m; if(!isBoss) bal=0; ui();
+            window.location.href=`https://wa.me/${num}?text=RETRAIT%20BADBOY%20${uid}%20NET:${net}F`;
+        } else { window.location.href=`https://wa.me/${num}?text=DEPOT%20BADBOY%20${uid}`; }
+    }
+</script>
+</body>
+</html>
