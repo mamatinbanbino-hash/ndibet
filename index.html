@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDIBET - Connexion par ID</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 100px; }
+        
+        /* HEADER AVEC ID */
+        .header { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
+        .user-info { display: flex; flex-direction: column; font-size: 0.7rem; }
+        .id-label { color: var(--gold); font-weight: bold; }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.1rem; }
+
+        /* GAIN BOX */
+        .gain-box { background: rgba(0, 255, 136, 0.1); border: 2px solid var(--green); border-radius: 15px; padding: 15px; margin: 15px auto; width: 200px; text-align: center; }
+        .gain-val { font-size: 1.8rem; font-weight: 900; }
+
+        /* GRILLES */
+        .game-area { max-width: 420px; margin: 0 auto; padding: 15px; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #2b3139; border-radius: 8px; border: none; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 0 #000; }
+        .cell.open { background: var(--green); }
+        .cell.boom { background: var(--red); }
+
+        /* FOOTER */
+        .footer { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; padding: 15px 0; border-top: 2px solid #333; }
+        .btn-dep { background: var(--green); color: black; padding: 10px 20px; border-radius: 10px; font-weight: 900; border: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="user-info" onclick="adminAccess()">
+        <span class="id-label">ID JOUEUR :</span>
+        <span id="player-id">NDI-XXXX</span>
+    </div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="game-area">
+    <div class="gain-box">
+        <div style="font-size: 0.6rem; color: var(--green);">GAIN ACTUEL</div>
+        <div class="gain-val" id="pot">0 F</div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <div style="background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #333;">
+        <label style="font-size: 0.7rem; color: gray;">MISE</label>
+        <input type="number" id="mise" value="100" style="width:100%; background:#000; color:var(--gold); border:1px solid #444; padding:12px; border-radius:10px; font-weight:900; margin-bottom:15px;">
+        
+        <button id="btn-start" style="width:100%; padding:15px; border-radius:12px; background:var(--gold); border:none; font-weight:900;" onclick="start()">LANCER LA PARTIE</button>
+        <button id="btn-cash" style="width:100%; padding:15px; border-radius:12px; background:var(--green); border:none; font-weight:900; display:none;" onclick="cashOut()">CASH OUT</button>
+    </div>
+</div>
+
+<div class="footer">
+    <button class="btn-dep" onclick="contact('depot')">DÉPÔT PAR ID</button>
+    <div style="color:var(--red); font-weight:bold; cursor:pointer;" onclick="contact('retrait')">RETRAIT</div>
+</div>
+
+<script>
+    let bal = 0; let playing = false; let potVal = 0; let mines = []; let isBoss = false;
+    let userId = "";
+
+    // GÉRER L'ID UNIQUE
+    function loadId() {
+        let storedId = localStorage.getItem('ndibet_id');
+        if(!storedId) {
+            storedId = "NDI-" + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem('ndibet_id', storedId);
+        }
+        userId = storedId;
+        document.getElementById('player-id').innerText = userId;
+    }
+    loadId();
+
+    function talk(m) { let u = new SpeechSynthesisUtterance(m); u.lang = 'fr-FR'; window.speechSynthesis.speak(u); }
+
+    const grid = document.getElementById('grid');
+    for(let i=0; i<25; i++) {
+        let b = document.createElement('button'); b.className='cell';
+        b.onclick = () => { if(!playing || b.innerText !== '') return;
+            if(mines.includes(i)){ b.className='cell boom'; b.innerText='💣'; playing=false; talk("Boum !"); setTimeout(reset, 1500); }
+            else { b.className='cell open'; b.innerText='💎'; potVal=Math.floor(potVal*1.4); document.getElementById('pot').innerText=potVal+" F"; talk("Diamant !"); }
+        };
+        grid.appendChild(b);
+    }
+
+    function start() {
+        let m = parseInt(document.getElementById('mise').value);
+        if(!isBoss && bal < m) return alert("❌ Solde insuffisant ! Contactez le Boss avec votre ID.");
+        if(!isBoss) bal -= m;
+        updateUI(); playing = true; potVal = m;
+        document.getElementById('pot').innerText = potVal + " F";
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-cash').style.display = 'block';
+        mines = []; while(mines.length < 3){ let r=Math.floor(Math.random()*25); if(!mines.includes(r)) mines.push(r); }
+        document.querySelectorAll('.cell').forEach(c=>{ c.className='cell'; c.innerText=''; });
+        talk("Bonne chance.");
+    }
+
+    function cashOut() { bal += potVal; talk("Gagné !"); reset(); }
+    function reset() { playing=false; document.getElementById('btn-start').style.display='block'; document.getElementById('btn-cash').style.display='none'; document.getElementById('pot').innerText="0 F"; updateUI(); }
+    function updateUI() { document.getElementById('solde').innerText = isBoss ? "ILLIMITÉ" : bal; }
+
+    function adminAccess() {
+        let c = 0;
+        return (function() {
+            c++;
+            if(c === 3) {
+                let p = prompt("🔑 BOSS ACCESS :\n1. Entrez montant\n2. Tapez BOSS99 pour Illimité");
+                if(p === "BOSS99") { isBoss = true; talk("Mode Boss activé."); }
+                else if(p) { bal += parseInt(p); isBoss = false; }
+                updateUI(); c = 0;
+            }
+            setTimeout(()=>c=0, 2000);
+        })();
+    }
+    const adminAction = adminAccess();
+    document.getElementById('player-id').onclick = adminAction;
+
+    function contact(type) {
+        let phone = "2250707656355";
+        let msg = "";
+        if(type === 'retrait') {
+            if(bal <= 0 && !isBoss) return alert("Solde vide.");
+            let m = bal; if(!isBoss) bal = 0; updateUI();
+            msg = `RETRAIT%20NDIBET%0AID:%20${userId}%0AMontant:%20${m}F`;
+        } else {
+            msg = `DEPOT%20NDIBET%0AMon%20ID:%20${userId}%0AJe%20souhaite%20recharger%20mon%20compte.`;
+        }
+        window.location.href = `https://wa.me/${phone}?text=${msg}`;
+    }
+</script>
+</body>
+</html>
