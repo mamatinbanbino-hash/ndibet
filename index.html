@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BADBOYSOLITAIRE 😈 - Paris du Jour</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; user-select: none; }
+        .header { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 900; }
+        .admin-lock { border: 1px solid var(--gold); padding: 5px 12px; border-radius: 8px; cursor: pointer; background: rgba(255,204,0,0.05); }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.2rem; }
+        .tabs { display: flex; background: #1c2127; border-bottom: 1px solid #333; overflow-x: auto; }
+        .tab { flex: 1; min-width: 90px; padding: 12px 5px; text-align: center; color: #848e9c; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(255,204,0,0.1); }
+        .game-area { max-width: 420px; margin: 0 auto; padding: 10px; }
+        .sport-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        .team-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .team-info { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.85rem; }
+        .team-logo { width: 22px; height: 22px; object-fit: contain; background: #fff; border-radius: 50%; padding: 1px; }
+        .odds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 5px; }
+        .odd-item { background: #2b3139; border: 1px solid #444; border-radius: 6px; padding: 8px 2px; text-align: center; cursor: pointer; font-size: 0.8rem; }
+        .odd-item:active { background: var(--gold); color: black; }
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #2b3139; border-radius: 8px; border: none; font-size: 1.4rem; box-shadow: 0 4px 0 #000; }
+        .btn-main { background: linear-gradient(180deg, #ffcc00, #ff9900); border: none; color: black; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; }
+        .footer { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; padding: 15px 0; border-top: 2px solid #333; z-index: 1000; }
+        .btn-wa { background: var(--green); color: black; padding: 10px 15px; border-radius: 10px; font-weight: bold; border: none; font-size: 0.8rem; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: #1c2127; border: 2px solid var(--gold); padding: 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; overflow-y: auto; max-height: 85vh; }
+        .coupon-box { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); width: 90%; background: #161a1e; border: 2px solid var(--gold); border-radius: 15px; padding: 15px; z-index: 1500; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="authModal">
+    <div class="modal-box">
+        <h2 style="color:var(--gold);">BADBOY<span style="color:white">SOLITAIRE 😈</span></h2>
+        <input type="text" id="pseudoInput" placeholder="Ton Pseudo" style="width:100%; padding:15px; box-sizing:border-box; border-radius:10px; margin-bottom:15px; background:#000; color:white; border:1px solid #444;">
+        <button class="btn-main" onclick="createAccount()">REJOINDRE LE GANG</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <span onclick="hidePanel()" style="float:right; cursor:pointer;">X</span>
+        <div id="admin-login">
+            <h3 style="color:var(--gold);">BOSS PANEL 😈</h3>
+            <input type="password" id="adminInput" placeholder="Code secret" style="width:100%; padding:10px; box-sizing:border-box; margin-bottom:10px; background:#000; color:white;">
+            <button class="btn-main" onclick="checkCode()">OUVRIR</button>
+        </div>
+        <div id="boss-menu" style="display:none;">
+            <button class="btn-main" style="margin-bottom:10px;" onclick="bossTicket()">🎟️ GÉNÉRER TICKET</button>
+            <button class="btn-main" style="margin-bottom:10px; background:white;" onclick="showAdminBets()">⚽ VALIDER PARIS</button>
+            <button class="btn-main" style="background:var(--red); color:white;" onclick="bossGodMode()">🔥 MODE INF</button>
+        </div>
+        <div id="admin-bet-list" style="display:none; text-align:left; font-size:0.75rem; margin-top:15px;"></div>
+    </div>
+</div>
+
+<div class="header">
+    <div class="admin-lock" onclick="showPanel()"><span id="player-id" style="font-size:0.7rem; color:gray;">ID: ...</span></div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="setGame('mines')">💣 Mines</div>
+    <div class="tab" onclick="setGame('sports')">⚽ Sports</div>
+    <div class="tab" onclick="setGame('aviator')">🚀 Aviator</div>
+    <div class="tab" onclick="setGame('fishing')">🎣 Pêche</div>
+</div>
+
+<div class="game-area">
+    <div id="area-mines">
+        <div style="background:rgba(0,255,136,0.1); border:1px solid var(--green); border-radius:10px; padding:10px; margin-bottom:10px; text-align:center;">GAIN: <span id="mine-pot" style="color:var(--green); font-weight:bold;">0 F</span></div>
+        <div id="grid-mines" class="grid-mines"></div>
+        <input type="number" id="mise-mines" value="100" style="width:100%; background:#000; color:var(--gold); border:1px solid #444; padding:10px; border-radius:10px; margin-bottom:10px; text-align:center;">
+        <button class="btn-main" id="btn-start-mines" onclick="playMines()">JOUER</button>
+        <button class="btn-main" id="btn-cash-mines" style="display:none; background:var(--green);" onclick="cashOutMines()">ENCAISSER</button>
+    </div>
+
+    <div id="area-sports" style="display:none;">
+        <h4 style="color:var(--gold); text-align:center;">LUNDI 23 FÉVRIER - LIVE ⚽</h4>
+        <div id="matches-list"></div>
+    </div>
+
+    <div id="area-aviator" style="display:none; text-align:center; padding:50px 0;">🚀 AVIATOR PRO (30% RTP)<br><button class="btn-main" style="margin-top:20px;">DÉCOLLER</button></div>
+    <div id="area-fishing" style="display:none; text-align:center; padding:50px 0;">🎣 PÊCHE JACKPOT<br><small style="color:gray;">(Faille active après 5 pertes)</small></div>
+</div>
+
+<div class="coupon-box" id="coupon">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>MON TICKET</b> <span onclick="closeCoupon()" style="color:var(--red);">X</span></div>
+    <div id="coupon-items" style="font-size:0.75rem; margin-bottom:10px;"></div>
+    <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold);">CÔTE TOTALE: <span id="total-odds">1.00</span></div>
+    <input type="number" id="mise-sport" value="90" oninput="updateGainSport()" style="width:100%; padding:10px; background:#000; border:1px solid #444; color:white; border-radius:8px; margin:10px 0; text-align:center;">
+    <button class="btn-main" onclick="placeSportBet()">VALIDER (Gain: <span id="gain-sport">0</span>F)</button>
+</div>
+
+<div class="footer">
+    <button class="btn-wa" onclick="goWa('depot')">DÉPÔT</button>
+    <button class="btn-wa" onclick="claimBonus()" style="background:var(--gold);">🎁 BONUS</button>
+    <button class="btn-wa" style="background:var(--red); color:white" onclick="goWa('retrait')">RETRAIT</button>
+</div>
+
+<script>
+    let bal = 0, active = false, isBoss = false, currentUser = localStorage.getItem('bad_user'), uid = localStorage.getItem('bad_id');
+    let coupon = [], minePot = 0, mineTraps = [], minesOpened = 0;
+
+    // MATCHS REELS DU LUNDI 23 FEVRIER 2026
+    const sportsData = [
+        { id: 0, t1: "Lens", l1: "https://upload.wikimedia.org/wikipedia/fr/b/ba/Logo_RC_Lens_2014.svg", t2: "Lyon", l2: "https://upload.wikimedia.org/wikipedia/fr/e/e2/Olympique_lyonnais_%28logo%29.svg", o1: 2.30, oN: 3.40, o2: 3.10 },
+        { id: 1, t1: "West Ham", l1: "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg", t2: "Newcastle", l2: "https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg", o1: 2.80, oN: 3.60, o2: 2.45 },
+        { id: 2, t1: "Girona", l1: "https://upload.wikimedia.org/wikipedia/en/9/94/Girona_FC_logo.svg", t2: "Sevilla", l2: "https://upload.wikimedia.org/wikipedia/en/3/3b/Sevilla_FC_logo.svg", o1: 1.95, oN: 3.50, o2: 3.80 },
+        { id: 3, t1: "Lazio", l1: "https://upload.wikimedia.org/wikipedia/en/c/ce/S.S._Lazio_badge.svg", t2: "Fiorentina", l2: "https://upload.wikimedia.org/wikipedia/en/7/79/ACF_Fiorentina_2022_logo.svg", o1: 2.25, oN: 3.20, o2: 3.40 },
+        { id: 4, t1: "Al Nassr", l1: "https://upload.wikimedia.org/wikipedia/en/4/4b/Al_Nassr_FC_logo.svg", t2: "Al Hilal", l2: "https://upload.wikimedia.org/wikipedia/en/f/fa/Al-Hilal_Saudi_FC_logo.svg", o1: 2.90, oN: 3.70, o2: 2.15 }
+    ];
+
+    if(!currentUser) document.getElementById('authModal').style.display='flex';
+    function createAccount() {
+        let p = document.getElementById('pseudoInput').value.trim();
+        if(p.length < 3) return alert("Pseudo court");
+        uid = "BAD-"+Math.floor(1000+Math.random()*9000);
+        localStorage.setItem('bad_user', p); localStorage.setItem('bad_id', uid);
+        location.reload();
+    }
+    document.getElementById('player-id').innerText = "ID: " + uid;
+
+    function setGame(g) {
+        document.getElementById('area-mines').style.display = g==='mines'?'block':'none';
+        document.getElementById('area-sports').style.display = g==='sports'?'block':'none';
+        document.getElementById('area-aviator').style.display = g==='aviator'?'block':'none';
+        document.getElementById('area-fishing').style.display = g==='fishing'?'block':'none';
+        if(g==='sports') renderSports();
+    }
+
+    function renderSports() {
+        const list = document.getElementById('matches-list'); list.innerHTML = '';
+        sportsData.forEach(m => {
+            list.innerHTML += `<div class="sport-card">
+                <div class="team-line"><div class="team-info"><img src="${m.l1}" class="team-logo">${m.t1}</div><div class="team-info">${m.t2}<img src="${m.l2}" class="team-logo"></div></div>
+                <div class="odds-grid">
+                    <div class="odd-item" onclick="selectOdd(${m.id}, '1', ${m.o1})">1: ${m.o1}</div>
+                    <div class="odd-item" onclick="selectOdd(${m.id}, 'N', ${m.oN})">N: ${m.oN}</div>
+                    <div class="odd-item" onclick="selectOdd(${m.id}, '2', ${m.o2})">2: ${m.o2}</div>
+                </div></div>`;
+        });
+    }
+
+    function selectOdd(mid, lbl, val) {
+        const m = sportsData.find(x => x.id === mid);
+        coupon = coupon.filter(x => x.mid !== mid);
+        coupon.push({ mid, name: `${m.t1} vs ${m.t2}`, lbl, val });
+        document.getElementById('coupon').style.display = 'block';
+        updateCouponUI();
+    }
+
+    function updateCouponUI() {
+        const items = document.getElementById('coupon-items'); items.innerHTML = '';
+        let total = 1.00;
+        coupon.forEach(c => { items.innerHTML += `<div>📍 ${c.name} (${c.lbl} @${c.val})</div>`; total *= c.val; });
+        document.getElementById('total-odds').innerText = total.toFixed(2);
+        updateGainSport();
+    }
+
+    function updateGainSport() {
+        let m = parseInt(document.getElementById('mise-sport').value) || 0;
+        let t = parseFloat(document.getElementById('total-odds').innerText);
+        document.getElementById('gain-sport').innerText = Math.floor(m * t);
+    }
+
+    function placeSportBet() {
+        let m = parseInt(document.getElementById('mise-sport').value);
+        if(m < 90) return alert("Mise 90F mini");
+        if(bal < m && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= m;
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]");
+        tks.push({ id: Date.now(), uid, pseudo: currentUser, items: coupon, mise: m, odds: document.getElementById('total-odds').innerText, status: 'En attente' });
+        localStorage.setItem('bad_tks', JSON.stringify(tks));
+        coupon = []; document.getElementById('coupon').style.display = 'none'; ui(); alert("Ticket Validé ! 😈");
+    }
+
+    // CASINO LOI 30% RTP
+    const gm = document.getElementById('grid-mines');
+    for(let i=0; i<25; i++) { let b = document.createElement('button'); b.className = 'cell'; b.onclick = () => hitMine(i, b); gm.appendChild(b); }
+    function playMines() {
+        let mise = parseInt(document.getElementById('mise-mines').value);
+        if(bal < mise && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= mise; ui(); active = true; minesOpened = 0; minePot = mise;
+        document.getElementById('btn-start-mines').style.display='none'; document.getElementById('btn-cash-mines').style.display='block';
+        mineTraps = []; while(mineTraps.length < 3) { let r = Math.floor(Math.random()*25); if(!mineTraps.includes(r)) mineTraps.push(r); }
+        document.querySelectorAll('.cell').forEach(c => { c.innerText=''; c.style.background='#2b3139'; c.dataset.open="false"; });
+        updateMinePot();
+    }
+    function hitMine(i, b) {
+        if(!active || b.dataset.open === "true") return;
+        if(mineTraps.includes(i) || Math.random() < 0.70) {
+            b.style.background = 'var(--red)'; b.innerText = '💣'; active = false; 
+            setTimeout(() => { document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; updateMinePot(0); }, 1500);
+        } else {
+            minesOpened++; b.dataset.open="true"; b.style.background='var(--green)'; b.innerText='💎';
+            minePot = Math.floor(minePot * 1.35); updateMinePot();
+        }
+    }
+    function cashOutMines() { bal += minePot; active = false; document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; updateMinePot(0); ui(); }
+    function updateMinePot(val) { document.getElementById('mine-pot').innerText = (val !== undefined ? val : minePot) + " F"; }
+
+    function showAdminBets() {
+        document.getElementById('boss-menu').style.display='none'; document.getElementById('admin-bet-list').style.display='block';
+        const list = document.getElementById('admin-bet-list'); list.innerHTML = '<h4>VALIDER</h4>';
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]").filter(x => x.status === 'En attente');
+        tks.forEach(t => {
+            list.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:5px;"><b>${t.pseudo} (${t.mise}F)</b><br>
+                <button onclick="resolveBet(${t.id}, 'Gagné')" style="color:green">GAGNÉ</button>
+                <button onclick="resolveBet(${t.id}, 'Perdu')" style="color:red">PERDU</button>
+            </div>`;
+        });
+    }
+    function resolveBet(id, s) {
+        let tks = JSON.parse(localStorage.getItem('bad_tks') || "[]");
+        let t = tks.find(x => x.id === id);
+        if(t) { t.status = s; if(s === 'Gagné' && t.uid === uid) bal += Math.floor(t.mise * t.odds); localStorage.setItem('bad_tks', JSON.stringify(tks)); ui(); showAdminBets(); }
+    }
+    function ui() { document.getElementById('solde').innerText = isBoss ? "BOSS" : bal; }
+    function claimBonus() { let d = new Date(); if(d.getDay()!==5) return alert("C'est Vendredi seulement !"); bal+=500; ui(); alert("+500F !"); }
+    function showPanel() { document.getElementById('adminModal').style.display='flex'; }
+    function hidePanel() { document.getElementById('adminModal').style.display='none'; }
+    function checkCode() { if(document.getElementById('adminInput').value === "BOSS99") { document.getElementById('admin-login').style.display='none'; document.getElementById('boss-menu').style.display='block'; } }
+    function bossTicket() { let m = prompt("Montant :"); if(m) alert("BAD-"+m+"-"+(Date.now()+600000).toString(36)+"-Z"); }
+    function bossGodMode() { isBoss=true; ui(); hidePanel(); }
+    function closeCoupon() { document.getElementById('coupon').style.display = 'none'; coupon = []; }
+    function goWa(t) {
+        let num = "2250707656355";
+        if(t==='retrait') {
+            if(bal < 1000) return alert("1000F mini");
+            let m=bal, net=m>=5000?Math.floor(m*0.95):m; if(!isBoss) bal=0; ui();
+            window.location.href=`https://wa.me/${num}?text=RETRAIT%20BADBOY%20${uid}%20NET:${net}F`;
+        } else { window.location.href=`https://wa.me/${num}?text=DEPOT%20BADBOY%20${uid}`; }
+    }
+</script>
+</body>
+</html>
