@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élite Play - Officiel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --red: #e60000; --white: #ffffff; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--white); margin: 0; color: var(--dark); }
+        
+        /* Header & Navigation */
+        header { background: var(--red); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 24px; font-weight: bold; }
+        
+        /* Layout */
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { border: 2px solid #eee; border-radius: 15px; padding: 20px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Style spécifique aux jeux */
+        .aviator-screen { background: #000; height: 200px; border-radius: 10px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--red); font-size: 40px; font-weight: bold; }
+        .mine-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 15px; }
+        .mine-cell { aspect-ratio: 1; background: #ddd; border: none; border-radius: 5px; cursor: pointer; font-size: 20px; }
+        .mine-cell.active { background: var(--red); color: white; }
+
+        /* Formulaires & Boutons */
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-red { background: var(--red); color: white; }
+        .btn-green { background: #28a745; color: white; margin-top: 5px; }
+        
+        /* Panel BOSS99 */
+        #boss-panel { display: none; background: #000; color: #00ff00; padding: 20px; border: 2px solid gold; margin-top: 20px; border-radius: 10px; }
+        .history { font-size: 12px; height: 50px; overflow-x: auto; white-space: nowrap; margin-top: 10px; background: #f0f0f0; padding: 5px; }
+        .badge { background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">ÉLITE PLAY</div>
+    <div>
+        <span id="user-balance">Solde: 0 FCFA</span>
+        <button onclick="toggleBoss()" style="background:none; border:1px solid white; color:white; cursor:pointer; margin-left:10px;">Accès Pro</button>
+    </div>
+</header>
+
+<div class="container">
+    <div id="auth-section" class="card">
+        <h3>Créer un compte Élite Play</h3>
+        <input type="text" id="reg-pseudo" placeholder="Pseudo (Obligatoire)" required>
+        <input type="tel" id="reg-phone" placeholder="Numéro de téléphone (Obligatoire)" required>
+        <button class="btn btn-red" onclick="register()">REJOINDRE LE JEU</button>
+        <p style="font-size: 12px;">* Bonus de 500 FCFA chaque Vendredi automatiquement crédité.</p>
+    </div>
+
+    <div id="main-games" style="display:none;">
+        <div class="game-grid">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3>✈️ AVIATOR</h3>
+                    <button class="badge" onclick="showHelp('aviator')">Mode d'emploi</button>
+                </div>
+                <div class="aviator-screen" id="aviator-display">x1.00</div>
+                <div class="history" id="aviator-history">Historique: </div>
+                
+                <input type="number" id="bet-amount" placeholder="Mise (50 - 10,000)" min="50" max="10000">
+                <div style="display:flex; gap:10px;">
+                    <label><input type="checkbox" id="auto-bet"> Auto Pari</label>
+                    <label><input type="checkbox" id="auto-cash"> Auto Retrait (x2.0)</label>
+                </div>
+                <button class="btn btn-red" id="bet-btn" onclick="startAviator()">PARIER</button>
+                <button class="btn btn-green" id="cashout-btn" style="display:none;" onclick="cashout()">ENCAISSER</button>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3>💣 MINES (5 Pièges)</h3>
+                    <button class="badge" onclick="showHelp('mines')">Mode d'emploi</button>
+                </div>
+                <canvas id="mineChart" style="height:100px;"></canvas>
+                <div class="mine-grid" id="grid-mines">
+                    </div>
+                <button class="btn btn-red" style="margin-top:10px;" onclick="randomMines()">MODE ALÉATOIRE</button>
+                <div id="mine-status" style="margin-top:10px; font-weight:bold;">Côte actuelle: x1.00</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <h3>💳 Portefeuille & Transactions</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div>
+                    <h4>Dépôt</h4>
+                    <p>Wave Propriétaire: <strong>0707656355</strong></p>
+                    <button class="btn btn-green" onclick="contactOwner()">Contacter via WhatsApp</button>
+                    <input type="text" placeholder="Coller Code Ticket (10 min)">
+                    <button class="btn btn-red">VALIDER TICKET</button>
+                </div>
+                <div>
+                    <h4>Retrait (Minimum 500)</h4>
+                    <input type="number" id="withdraw-amount" placeholder="Montant">
+                    <button class="btn btn-red" onclick="handleWithdraw()">RETIRER & VIDER LE COMPTE</button>
+                    <p style="font-size:11px;">Note: 5% de frais sur les retraits de 5000+. Remboursement si > 4h.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="boss-panel">
+        <h3>⚡ OPTION BOSS99 ACTIVÉE</h3>
+        <p>Statut: Argent Illimité | Accès Registre complet</p>
+        <button class="btn btn-green" style="width:auto;">Générer Ticket 10min</button>
+        <button class="btn btn-red" style="width:auto;">Recharge par ID Membre</button>
+        <div id="member-list" style="margin-top:10px; border-top:1px solid #333;">
+            <p>Dernière inscription: <span id="last-reg">Aucune</span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let balance = 0;
+    let currentCote = 1.0;
+    let aviatorInterval;
+    let mineChart;
+
+    // Initialisation Grille Mines
+    const grid = document.getElementById('grid-mines');
+    for(let i=0; i<25; i++) {
+        let btn = document.createElement('button');
+        btn.className = 'mine-cell';
+        btn.onclick = () => btn.classList.toggle('active');
+        grid.appendChild(btn);
+    }
+
+    // Graphique Mines (Évolution)
+    const ctx = document.getElementById('mineChart').getContext('2d');
+    mineChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [0, 1, 2, 3, 4, 5], datasets: [{ label: 'Évolution Côte', data: [1, 1.2, 1.5, 2.1, 3.5, 5.8], borderColor: 'red' }] }
+    });
+
+    function register() {
+        const pseudo = document.getElementById('reg-pseudo').value;
+        if(!pseudo) return alert("Pseudo obligatoire !");
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('main-games').style.display = 'block';
+        document.getElementById('last-reg').innerText = pseudo;
+    }
+
+    function startAviator() {
+        let display = document.getElementById('aviator-display');
+        let btnBet = document.getElementById('bet-btn');
+        let btnCash = document.getElementById('cashout-btn');
+        
+        currentCote = 1.0;
+        btnBet.style.display = 'none';
+        btnCash.style.display = 'block';
+
+        aviatorInterval = setInterval(() => {
+            currentCote += 0.03;
+            display.innerText = 'x' + currentCote.toFixed(2);
+            
+            // Algorithme 65% pertes (Probabilité de crash augmente)
+            if(Math.random() < 0.03) { 
+                clearInterval(aviatorInterval);
+                display.innerText = "CRASH !";
+                display.style.color = "gray";
+                setTimeout(() => {
+                    display.style.color = "red";
+                    btnBet.style.display = 'block';
+                    btnCash.style.display = 'none';
+                    document.getElementById('aviator-history').innerHTML += `<span style="color:red; margin-right:5px;">${currentCote.toFixed(2)}</span>`;
+                }, 2000);
+            }
+        }, 100);
+    }
+
+    function cashout() {
+        clearInterval(aviatorInterval);
+        alert("Gagné ! Côte: " + currentCote.toFixed(2));
+        location.reload(); // Réinitialise pour l'exemple
+    }
+
+    function handleWithdraw() {
+        let amt = document.getElementById('withdraw-amount').value;
+        if(amt < 500) return alert("Minimum 500 FCFA");
+        alert("Demande envoyée. Capture d'écran requise pour WhatsApp.");
+        window.location.href = "https://wa.me/2250707656355?text=Retrait de " + amt;
+    }
+
+    function showHelp(game) {
+        if(game === 'aviator') alert("Aviator: Misez entre 50 et 10,000. Retirez avant le crash. Gain 35%, Perte 65%.");
+        if(game === 'mines') alert("Mines: 5 pièges. Cliquez sur les cases. Côte monte à chaque réussite.");
+    }
+
+    function toggleBoss() {
+        const p = document.getElementById('boss-panel');
+        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function contactOwner() { window.location.href = "https://wa.me/2250707656355"; }
+</script>
+
+</body>
+</html>
