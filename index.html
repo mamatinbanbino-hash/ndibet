@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NDIBET - Elite Casino</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; user-select: none; -webkit-user-select: none; }
+        
+        /* HEADER */
+        .header { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .admin-lock { border: 1px solid var(--gold); padding: 5px 10px; border-radius: 8px; cursor: pointer; text-align: center; background: rgba(255,204,0,0.05); }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.2rem; }
+
+        /* TABS SELECTION JEUX */
+        .tabs { display: flex; background: #1c2127; border-bottom: 1px solid #333; }
+        .tab { flex: 1; padding: 12px 5px; text-align: center; color: #848e9c; cursor: pointer; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; transition: 0.3s; white-space: nowrap; }
+        .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(255,204,0,0.1); }
+
+        /* CARRÉ DE GAIN ILLUMINÉ */
+        .gain-box { background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, #000 100%); border: 2px solid var(--green); border-radius: 15px; padding: 15px; margin: 15px auto; width: 220px; text-align: center; box-shadow: 0 0 20px rgba(0,255,136,0.2); animation: pulse 2s infinite; }
+        .gain-amount { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(0,255,136,0.5); }
+
+        /* GRILLES DE JEUX */
+        .game-area { max-width: 420px; margin: 0 auto; padding: 10px; text-align: center; }
+        
+        /* MINES */
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #2b3139; border-radius: 8px; border: none; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 0 #000; transition: 0.1s; }
+        .cell.open { background: var(--green); }
+        .cell.boom { background: var(--red); }
+
+        /* AVIATOR */
+        .aviator-zone { background: #000; border-radius: 15px; border: 2px solid #333; padding: 15px; margin: 15px 0; position: relative; height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+        .av-history { position: absolute; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.05); padding: 5px; display: flex; gap: 5px; overflow-x: auto; box-sizing: border-box; border-bottom: 1px solid #333; }
+        .hist-pill { font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 10px; background: #222; }
+        .hist-pill.win { color: var(--green); border: 1px solid var(--green); }
+        .hist-pill.lose { color: var(--red); border: 1px solid var(--red); }
+        .av-multiplier { font-size: 4rem; font-weight: 900; color: var(--gold); z-index: 10; transition: color 0.2s; }
+        .av-plane { font-size: 3rem; position: absolute; bottom: 20px; left: 20px; transition: 0.1s linear; }
+
+        /* PLINKO */
+        .plinko-zone { background: #000; border-radius: 15px; border: 2px solid #333; padding: 10px; margin: 15px 0; height: 220px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
+        .plinko-ball { width: 16px; height: 16px; background: var(--gold); border-radius: 50%; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; display: none; box-shadow: 0 0 10px var(--gold); }
+        .plinko-slots { display: flex; justify-content: space-between; width: 100%; gap: 3px; }
+        .slot { background: #222; flex: 1; text-align: center; font-size: 0.65rem; font-weight: 900; padding: 8px 0; border-radius: 5px; color: white; border-top: 3px solid; }
+        .slot-red { border-color: var(--red); color: var(--red); }
+        .slot-yellow { border-color: #ff9900; color: #ff9900; }
+        .slot-green { border-color: var(--green); color: var(--green); }
+        .plinko-pegs { position: absolute; top: 20px; width: 100%; height: 160px; background-image: radial-gradient(circle, #555 2px, transparent 2px); background-size: 30px 30px; background-position: center; opacity: 0.5; }
+
+        /* PANEL MISE */
+        .panel { background: var(--card); border-radius: 20px; padding: 20px; margin: 10px; border: 1px solid #333; }
+        input, select { background: #000; border: 1px solid #444; color: var(--gold); padding: 14px; border-radius: 10px; width: 100%; box-sizing: border-box; font-weight: 900; font-size: 1.1rem; margin-top: 5px; margin-bottom: 15px; text-align: center; outline: none; }
+        .btn-main { background: linear-gradient(180deg, #ffcc00, #ff9900); border: none; color: black; padding: 18px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255,153,0,0.3); }
+
+        /* FOOTER */
+        .footer { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; align-items: center; padding: 15px 0; border-top: 2px solid #333; z-index: 1000; }
+        .btn-wa { background: var(--green); color: black; padding: 10px 20px; border-radius: 10px; font-weight: 900; border: none; font-size: 0.9rem; }
+
+        /* MODAL ADMIN */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-box { background: #1c2127; border: 2px solid var(--gold); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 15px; color: #888; font-size: 1.5rem; cursor: pointer; }
+        .boss-btn { width: 100%; padding: 15px; margin: 5px 0; border-radius: 10px; border: 1px solid #444; background: #222; color: white; font-weight: bold; cursor: pointer; }
+
+        @keyframes pulse { 0% {box-shadow: 0 0 10px rgba(0,255,136,0.2);} 50% {box-shadow: 0 0 25px rgba(0,255,136,0.6);} 100% {box-shadow: 0 0 10px rgba(0,255,136,0.2);} }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="admin-lock" onclick="showPanel()">
+        <div style="font-size: 0.8rem; font-weight: bold; color: var(--gold);">🔒 PANEL</div>
+        <div id="player-id" style="font-size: 0.5rem; color: #aaa;">ID: CHARGEMENT...</div>
+    </div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <span class="close-btn" onclick="hidePanel()">×</span>
+        
+        <div id="admin-login">
+            <h3 style="color:var(--gold); margin:0 0 15px 0;">CENTRE DE RECHARGE</h3>
+            <p style="font-size:0.8rem; color:#aaa;">Entrez le Ticket (valide 10 min) ou le code Boss.</p>
+            <input type="text" id="adminInput" placeholder="Ex: NDI-2000-XYZ...">
+            <button class="btn-main" onclick="checkCode()">VALIDER</button>
+        </div>
+
+        <div id="boss-menu" style="display:none;">
+            <h3 style="color:var(--gold);">👑 MENU BOSS</h3>
+            <button class="boss-btn" style="border-color:var(--green); color:var(--green);" onclick="bossTicket()">🎟️ GÉNÉRER TICKET (10 MIN)</button>
+            <button class="boss-btn" style="border-color:var(--gold); color:var(--gold);" onclick="bossDirect()">💰 RECHARGE DIRECTE</button>
+            <button class="boss-btn" style="border-color:var(--red); color:var(--red);" onclick="bossGodMode()">🔥 MODE ILLIMITÉ</button>
+        </div>
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" id="tab-mines" onclick="setGame('mines')">💣 Mines</div>
+    <div class="tab" id="tab-aviator" onclick="setGame('aviator')">🚀 Aviator</div>
+    <div class="tab" id="tab-plinko" onclick="setGame('plinko')">🎱 Plinko</div>
+</div>
+
+<div class="game-area">
+    <div class="gain-box">
+        <div style="font-size: 0.7rem; color: var(--green); font-weight:900;">GAIN ACTUEL</div>
+        <div class="gain-amount" id="pot">0 F</div>
+    </div>
+
+    <div id="grid-mines" class="grid-mines"></div>
+
+    <div id="grid-aviator" class="aviator-zone" style="display:none;">
+        <div class="av-history" id="av-hist"></div>
+        <div class="av-multiplier" id="av-mult">1.00x</div>
+        <div class="av-plane" id="av-plane">✈️</div>
+    </div>
+
+    <div id="grid-plinko" class="plinko-zone" style="display:none;">
+        <div class="plinko-pegs"></div>
+        <div class="plinko-ball" id="p-ball"></div>
+        <div class="plinko-slots">
+            <div class="slot slot-red">x5</div>
+            <div class="slot slot-yellow">x2</div>
+            <div class="slot slot-green">x0.5</div>
+            <div class="slot slot-green">x0.2</div>
+            <div class="slot slot-green">x0.5</div>
+            <div class="slot slot-yellow">x2</div>
+            <div class="slot slot-red">x5</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <label style="font-size: 0.7rem; color: gray;">MISE</label>
+        <input type="number" id="mise" value="100">
+        
+        <div id="opt-mines">
+            <label style="font-size: 0.7rem; color: gray;">DIFFICULTÉ (MINES UNIQUEMENT)</label>
+            <select id="nb-mines">
+                <option value="1">1 Mine</option>
+                <option value="3" selected>3 Mines</option>
+                <option value="5">5 Mines</option>
+            </select>
+        </div>
+
+        <button id="btn-start" class="btn-main" onclick="play()">JOUER</button>
+        <button id="btn-cash" class="btn-main" style="display:none; background:var(--green);" onclick="cashOut()">ENCAISSER</button>
+    </div>
+</div>
+
+<div class="footer">
+    <div style="color: gray; font-size: 0.8rem; font-weight:bold;" onclick="location.reload()">ACCUEIL</div>
+    <button class="btn-wa" onclick="goWa('depot')">DÉPÔT WAVE</button>
+    <div style="color: var(--red); font-weight: bold; cursor: pointer;" onclick="goWa('retrait')">RETRAIT</div>
+</div>
+
+<script>
+    let bal = 0; let mode = 'mines'; let active = false; let isBoss = false;
+    let potVal = 0; let curBet = 0; 
+    
+    // Variables Mines
+    let traps = []; 
+    
+    // Variables Aviator
+    let avInterval; let avMult = 1.00; let avCrashPoint = 0; let historyAv = [1.2, 2.4, 1.0];
+
+    // Variables Plinko
+    const pMults = [5, 2, 0.5, 0.2, 0.5, 2, 5];
+
+    // ID UTILISATEUR
+    let uid = localStorage.getItem('nid') || "NDI-" + Math.floor(1000 + Math.random()*9000);
+    localStorage.setItem('nid', uid);
+    document.getElementById('player-id').innerText = "ID: " + uid;
+
+    // INIT MINES
+    const gm = document.getElementById('grid-mines');
+    for(let i=0; i<25; i++) { let b=document.createElement('button'); b.className='cell'; b.onclick=()=>hitM(i,b); gm.appendChild(b); }
+    
+    // MAJ HISTORIQUE AVIATOR
+    function updateAvHistory() {
+        const histDiv = document.getElementById('av-hist');
+        histDiv.innerHTML = '';
+        historyAv.forEach(val => {
+            let cl = val >= 2.0 ? 'win' : 'lose';
+            histDiv.innerHTML += `<div class="hist-pill ${cl}">${val.toFixed(2)}x</div>`;
+        });
+    }
+    updateAvHistory();
+
+    function speak(t) { let u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; window.speechSynthesis.speak(u); }
+
+    // --- PANEL ADMIN (RECHARGE AVEC TICKET TEMPORAIRE) ---
+    function showPanel() { document.getElementById('adminModal').style.display='flex'; document.getElementById('admin-login').style.display='block'; document.getElementById('boss-menu').style.display='none'; document.getElementById('adminInput').value=''; }
+    function hidePanel() { document.getElementById('adminModal').style.display='none'; }
+    
+    function checkCode() {
+        let val = document.getElementById('adminInput').value.trim();
+        if(val === "BOSS99") { 
+            document.getElementById('admin-login').style.display='none';
+            document.getElementById('boss-menu').style.display='block';
+        } else if(val.startsWith("NDI-")) {
+            // Format du ticket : NDI-Montant-Timestamp-Random
+            let parts = val.split("-");
+            if(parts.length >= 4) {
+                let mt = parseInt(parts[1]);
+                let expireTime = parseInt(parts[2], 36); 
+                
+                let usedCodes = JSON.parse(localStorage.getItem('used_tickets') || "[]");
+                if(usedCodes.includes(val)) return alert("❌ Ce code a déjà été utilisé !");
+                if(Date.now() > expireTime) return alert("❌ Code expiré ! Les tickets ne durent que 10 minutes.");
+                if(isNaN(mt)) return alert("❌ Code invalide.");
+
+                bal += mt; isBoss = false; ui();
+                usedCodes.push(val);
+                localStorage.setItem('used_tickets', JSON.stringify(usedCodes));
+                alert("✅ RECHARGE RÉUSSIE : " + mt + " F");
+                hidePanel();
+            } else { alert("❌ Code invalide."); }
+        } else { alert("❌ Code inconnu."); }
+    }
+
+    function bossTicket() {
+        let m = prompt("Montant du ticket (F) :");
+        if(m) {
+            let expireStr = (Date.now() + 10 * 60000).toString(36); 
+            let randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+            let ticket = "NDI-" + m + "-" + expireStr + "-" + randomStr;
+            alert("🎟️ TICKET TEMPORAIRE (10 MIN) :\n\n" + ticket + "\n\nEnvoyez ce code au client rapidement !");
+        }
+    }
+    
+    function bossDirect() { let m = prompt("Montant à ajouter ici :"); if(m) { bal+=parseInt(m); isBoss=false; ui(); hidePanel(); } }
+    function bossGodMode() { isBoss = true; ui(); hidePanel(); }
+
+    // --- LOGIQUE JEUX ---
+    function setGame(g) { 
+        if(active) return; 
+        mode=g; 
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); 
+        document.getElementById('tab-'+g).classList.add('active'); 
+        
+        document.getElementById('grid-mines').style.display = g==='mines' ? 'grid' : 'none'; 
+        document.getElementById('grid-aviator').style.display = g==='aviator' ? 'flex' : 'none'; 
+        document.getElementById('grid-plinko').style.display = g==='plinko' ? 'flex' : 'none';
+        
+        document.getElementById('opt-mines').style.display = g==='mines' ? 'block' : 'none'; 
+    }
+
+    function play() {
+        curBet = parseInt(document.getElementById('mise').value);
+        if(!isBoss && bal < curBet) return alert("❌ Solde insuffisant ! Faites un dépôt Wave.");
+        if(!isBoss) bal -= curBet;
+        ui(); active = true; potVal = curBet;
+        
+        if(mode !== 'plinko') {
+            document.getElementById('btn-start').style.display = 'none';
+            document.getElementById('btn-cash').style.display = 'block';
+        }
+
+        if(mode === 'mines') {
+            document.getElementById('pot').innerText = potVal + " F";
+            traps=[]; let n=parseInt(document.getElementById('nb-mines').value);
+            while(traps.length<n){ let r=Math.floor(Math.random()*25); if(!traps.includes(r)) traps.push(r); }
+            document.querySelectorAll('.cell').forEach(c=>{ c.innerText=''; c.style.background='#2b3139'; });
+        } 
+        else if (mode === 'aviator') {
+            avMult = 1.00;
+            document.getElementById('av-mult').style.color = 'var(--gold)';
+            document.getElementById('av-mult').innerText = "1.00x";
+            document.getElementById('av-plane').style.bottom = "20px";
+            document.getElementById('av-plane').style.left = "20px";
+            document.getElementById('pot').innerText = curBet + " F";
+            
+            avCrashPoint = (Math.random() * 4 + 1.01).toFixed(2);
+            
+            avInterval = setInterval(() => {
+                avMult += 0.02;
+                document.getElementById('av-mult').innerText = avMult.toFixed(2) + "x";
+                potVal = Math.floor(curBet * avMult);
+                document.getElementById('pot').innerText = potVal + " F";
+                
+                let moveY = Math.min(100, (avMult - 1) * 30);
+                let moveX = Math.min(80, (avMult - 1) * 20);
+                document.getElementById('av-plane').style.bottom = (20 + moveY) + "px";
+                document.getElementById('av-plane').style.left = (20 + moveX) + "%";
+
+                if(avMult >= avCrashPoint) crashAviator();
+            }, 60);
+        }
+        else if (mode === 'plinko') {
+            // Lancement PLINKO
+            document.getElementById('pot').innerText = curBet + " F";
+            document.getElementById('btn-start').style.opacity = '0.5';
+            
+            let pball = document.getElementById('p-ball');
+            pball.style.transition = 'none';
+            pball.style.top = '0px';
+            pball.style.left = '50%';
+            pball.style.display = 'block';
+
+            // Tirage au sort réaliste (plus de chance de tomber au milieu)
+            let sIdx = 3; let rand = Math.random();
+            if(rand < 0.05) sIdx = 0; else if(rand < 0.1) sIdx = 6;
+            else if(rand < 0.25) sIdx = 1; else if(rand < 0.4) sIdx = 5;
+            else if(rand < 0.6) sIdx = 2; else if(rand < 0.8) sIdx = 4;
+            else sIdx = 3;
+
+            let targetLeft = (sIdx * (100 / 7)) + (100 / 14);
+
+            setTimeout(() => {
+                pball.style.transition = 'top 1.5s cubic-bezier(0.25,0.8,0.5,1), left 1.5s ease-in-out';
+                pball.style.top = '180px';
+                pball.style.left = targetLeft + '%';
+            }, 50);
+
+            setTimeout(() => {
+                let winMult = pMults[sIdx];
+                potVal = Math.floor(curBet * winMult);
+                bal += potVal; // Plinko paie automatiquement
+                document.getElementById('pot').innerText = potVal + " F";
+                if(winMult >= 2) speak("Jackpot");
+                else if(winMult > 0.5) speak("Gagné");
+                else speak("Perdu");
+                
+                setTimeout(() => { 
+                    reset(); 
+                    document.getElementById('btn-start').style.opacity = '1'; 
+                }, 2000);
+            }, 1600);
+        }
+    }
+
+    // EVENT MINES
+    function hitM(i,b) {
+        if(!active || mode!=='mines' || b.innerText!=='') return;
+        if(traps.includes(i)) { b.style.background='var(--red)'; b.innerText='💣'; active=false; setTimeout(reset, 1500); }
+        else { 
+            b.style.background='var(--green)'; b.innerText='💎'; 
+            let mult = 1 + (parseInt(document.getElementById('nb-mines').value) * 0.2);
+            potVal = Math.floor(potVal * mult); 
+            document.getElementById('pot').innerText = potVal + " F"; 
+        }
+    }
+
+    // EVENT AVIATOR CRASH
+    function crashAviator() {
+        clearInterval(avInterval);
+        active = false;
+        document.getElementById('av-mult').style.color = 'var(--red)';
+        document.getElementById('av-mult').innerText = "EXPLOSÉ !";
+        
+        historyAv.unshift(parseFloat(avMult.toFixed(2)));
+        if(historyAv.length > 6) historyAv.pop();
+        updateAvHistory();
+        
+        setTimeout(reset, 1500);
+    }
+
+    // CASH OUT (Mines & Aviator)
+    function cashOut() { 
+        if(!active || mode === 'plinko') return;
+        if(mode === 'aviator') {
+            clearInterval(avInterval);
+           
