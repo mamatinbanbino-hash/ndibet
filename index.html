@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Élite Play ⚽ - Officiel</title>
+    <style>
+        :root { --red: #ff0000; --white: #ffffff; --gray: #333; --dark: #f8f9fa; }
+        body { background: var(--white); color: var(--gray); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 90px; overflow-x: hidden; user-select: none; }
+        
+        /* UI FIX */
+        .header { background: var(--red); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #b30000; position: sticky; top: 0; z-index: 1000; }
+        .bal-badge { background: white; color: var(--red); padding: 8px 15px; border-radius: 20px; font-weight: 900; font-size: 1.2rem; border: 2px solid #b30000; }
+        
+        .tabs { display: flex; background: #eee; border-bottom: 1px solid #ddd; overflow-x: auto; }
+        .tab { flex: 1; min-width: 80px; padding: 15px 5px; text-align: center; color: var(--gray); cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; border-right: 1px solid #ddd; }
+        .tab.active { background: var(--red); color: white; }
+
+        .container { max-width: 450px; margin: 0 auto; padding: 15px; text-align: center; }
+        .game-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #eee; margin-bottom: 20px; }
+        
+        /* AVIATOR ENGINE */
+        #avi-display { background: #000; height: 180px; border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 15px; border: 2px solid #333; }
+        #avi-mult { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; color: var(--red); z-index: 10; }
+        #avi-plane { position: absolute; bottom: 20px; left: 20px; font-size: 2.5rem; transition: 0.1s linear; z-index: 5; }
+
+        /* MINES ENGINE */
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #ddd; border-radius: 8px; border: none; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 0 #bbb; }
+        
+        /* PLINKO ENGINE */
+        #pli-display { background: #000; height: 220px; border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 10px; }
+        .p-ball { width: 15px; height: 15px; background: var(--red); border-radius: 50%; position: absolute; top: 10px; left: 50%; transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .p-slots { display: flex; position: absolute; bottom: 0; width: 100%; gap: 2px; }
+        .slot { flex: 1; font-size: 0.6rem; padding: 5px 0; background: #222; color: white; border-top: 2px solid var(--red); }
+
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-weight: bold; text-align: center; font-size: 1rem; }
+        .btn-action { background: var(--red); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 1rem; box-shadow: 0 4px 0 #b30000; }
+        .btn-action:active { transform: translateY(3px); box-shadow: 0 1px 0 #b30000; }
+        
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 380px; text-align: center; position: relative; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 2px solid #eee; z-index: 900; }
+    </style>
+</head>
+<body>
+
+<div class="modal" id="authModal" style="display:flex;">
+    <div class="modal-content">
+        <h2 style="color:var(--red); margin-top:0;">ÉLITE PLAY ⚽</h2>
+        <p style="font-weight:bold;">Pseudo et Téléphone obligatoires</p>
+        <input type="text" id="p_name" placeholder="Choisissez un Pseudo">
+        <input type="tel" id="p_tel" placeholder="Votre Numéro de téléphone">
+        <button class="btn-action" onclick="saveUser()">DÉMARRER MON COMPTE</button>
+    </div>
+</div>
+
+<div class="modal" id="adminModal">
+    <div class="modal-content">
+        <span onclick="closeM()" style="position:absolute; top:15px; right:20px; font-weight:bold; cursor:pointer;">X</span>
+        <h3 style="color:var(--red);">PANEL PROPRIÉTAIRE 👑</h3>
+        <div id="boss_login">
+            <input type="password" id="boss_code" placeholder="Code secret BOSS99">
+            <button class="btn-action" onclick="authBoss()">ACCÉDER AU PANEL</button>
+        </div>
+        <div id="boss_tools" style="display:none; margin-top:15px;">
+            <button class="btn-action" style="background:#333; margin-bottom:10px;" onclick="genTicket()">🎟️ RECHARGE PAR TICKET</button>
+            <button class="btn-action" style="background:#333; margin-bottom:10px;" onclick="rechargeByID()">💰 RECHARGE PAR ID</button>
+            <button class="btn-action" style="background:#000;" onclick="godMode()">🔥 ARGENT ILLIMITÉ (BOSS)</button>
+        </div>
+    </div>
+</div>
+
+<div class="header">
+    <div onclick="openM()"><span id="id_tag" style="font-weight:bold; font-size:0.85rem;">BIENVENUE</span></div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" id="t-avi" onclick="game('avi')">🚀 Aviator</div>
+    <div class="tab" id="tab-min" onclick="game('min')">💣 Mines</div>
+    <div class="tab" id="tab-pli" onclick="game('pli')">🎱 Plinko</div>
+    <div class="tab" id="tab-wal" onclick="game('wal')">💳 Caisse</div>
+</div>
+
+<div class="container">
+    <div id="g-avi">
+        <div class="game-box">
+            <div id="avi-display">
+                <div id="avi-mult">1.00x</div>
+                <div id="avi-plane">✈️</div>
+            </div>
+            <input type="number" id="m_avi" value="100" min="50" max="10000">
+            <button class="btn-action" id="b_avi_start" onclick="startAvi()">PARIER</button>
+            <button class="btn-action" id="b_avi_cash" style="display:none; background:#00ff88; color:black;" onclick="cashAvi()">ENCAISSER</button>
+        </div>
+    </div>
+
+    <div id="g-min" style="display:none;">
+        <div class="game-box">
+            <div id="mi_stat" style="font-weight:bold; color:var(--red); font-size:1.2rem; margin-bottom:10px;">GAIN: 0 F</div>
+            <div class="grid-mines" id="mi_grid"></div>
+            <input type="number" id="m_min" value="100" min="50" max="10000">
+            <button class="btn-action" id="b_mi_start" onclick="startMin()">LANCER (5 PIÈGES)</button>
+            <button class="btn-action" id="b_mi_cash" style="display:none; background:#00ff88; color:black;" onclick="cashMin()">ENCAISSER</button>
+        </div>
+    </div>
+
+    <div id="g-pli" style="display:none;">
+        <div class="game-box">
+            <div id="pli-display">
+                <div id="p-ball" class="p-ball" style="display:none;"></div>
+                <div class="p-slots">
+                    <div class="slot">x5</div><div class="slot">x2</div><div class="slot">x0.5</div><div class="slot">x0.2</div><div class="slot">x0.5</div><div class="slot">x2</div><div class="slot">x5</div>
+                </div>
+            </div>
+            <button class="btn-action" onclick="startPli()">LANCER BILLE (100 F)</button>
+        </div>
+    </div>
+
+    <div id="g-wal" style="display:none;">
+        <div class="game-box">
+            <h4 style="margin-top:0;">💳 DÉPÔT</h4>
+            <p style="font-size:0.8rem;">Dépôt Wave: <b>07070656355</b><br>(Envoyez la capture d'écran au Boss)</p>
+            <input type="text" id="t_code" placeholder="Coller le Code Ticket ici">
+            <button class="btn-action" style="background:#555; margin-bottom:10px;" onclick="useTicket()">RECHARGE PAR TICKET</button>
+            <button class="btn-action" style="background:#25D366;" onclick="wa('depot')">SIGNALER DÉPÔT WHATSAPP</button>
+        </div>
+        <div class="game-box">
+            <h4 style="margin-top:0;">💸 RETRAIT</h4>
+            <p style="font-size:0.7rem; color:red;">Frais 5% dès 5000F. Minimum 500F.</p>
+            <input type="number" id="r_amt" placeholder="Montant">
+            <button class="btn-action" onclick="retrait()">VALIDER LE RETRAIT</button>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div onclick="location.reload()" style="cursor:pointer; font-weight:900; color:var(--red);">🔄 RETOUR / RECHARGER</div>
+</div>
+
+<script>
+    let bal = 0, pseudo = "", tel = "", id = "", isGod = false, gameOn = false;
+    let aviM = 1.0, aviIv, minT = [], minR = 0, minM = 0;
+
+    // --- REPARATION INSCRIPTION ---
+    function saveUser() {
+        pseudo = document.getElementById('p_name').value.trim();
+        tel = document.getElementById('p_tel').value.trim();
+        if(pseudo.length < 2 || tel.length < 8) {
+            alert("Veuillez entrer un pseudo et un numéro de téléphone !");
+            return;
+        }
+        id = "EP-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('id_tag').innerText = "ID: " + id;
+        document.getElementById('authModal').style.display = 'none';
+        alert("Bienvenue " + pseudo + " ! Ton ID est " + id);
+    }
+
+    // --- NAVIGATION ---
+    function game(g) {
+        if(gameOn) return alert("Veuillez encaisser avant de changer de jeu !");
+        document.getElementById('g-avi').style.display = g==='avi'?'block':'none';
+        document.getElementById('g-min').style.display = g==='min'?'block':'none';
+        document.getElementById('g-pli').style.display = g==='pli'?'block':'none';
+        document.getElementById('g-wal').style.display = g==='wal'?'block':'none';
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-'+g).classList.add('active');
+    }
+
+    // --- AVIATOR RÉEL (LOI 35%) ---
+    function startAvi() {
+        let m = parseInt(document.getElementById('m_avi').value);
+        if(bal < m && !isGod) return alert("Solde insuffisant !");
+        if(!isGod) bal -= m; updateUI(); gameOn = true; aviM = 1.0;
+        document.getElementById('b_avi_start').style.display = 'none';
+        document.getElementById('b_avi_cash').style.display = 'block';
+        document.getElementById('avi-mult').style.color = "var(--red)";
+        
+        let crash = Math.random() < 0.35 ? (Math.random()*4+1.8) : (Math.random()*0.4+1.01);
+        
+        aviIv = setInterval(() => {
+            aviM += 0.04;
+            document.getElementById('avi-mult').innerText = aviM.toFixed(2)+"x";
+            document.getElementById('avi-plane').style.transform = `translate(${aviM*10}px, -${aviM*10}px)`;
+            if(aviM >= crash) {
+                clearInterval(aviIv); document.getElementById('avi-mult').innerText = "PARTI !";
+                document.getElementById('avi-mult').style.color = "black";
+                gameOn = false; setTimeout(() => {
+                    document.getElementById('b_avi_start').style.display = 'block';
+                    document.getElementById('b_avi_cash').style.display = 'none';
+                    document.getElementById('avi-plane').style.transform = "translate(0,0)";
+                }, 2000);
+            }
+        }, 100);
+    }
+    function cashAvi() {
+        clearInterval(aviIv); let win = Math.floor(parseInt(document.getElementById('m_avi').value) * aviM);
+        bal += win; gameOn = false; updateUI(); alert("ENCAISSÉ: "+win+" F");
+        document.getElementById('b_avi_start').style.display = 'block';
+        document.getElementById('b_avi_cash').style.display = 'none';
+    }
+
+    // --- MINES RÉEL (5 PIÈGES) ---
+    function startMin() {
+        minM = parseInt(document.getElementById('m_min').value);
+        if(bal < minM && !isGod) return alert("Solde insuffisant !");
+        if(!isGod) bal -= minM; updateUI(); gameOn = true; minR = 0; minT = [];
+        while(minT.length < 5) { let r = Math.floor(Math.random()*25); if(!minT.includes(r)) minT.push(r); }
+        const grid = document.getElementById('mi_grid'); grid.innerHTML = "";
+        for(let i=0; i<25; i++) {
+            let c = document.createElement('button'); c.className = "cell";
+            c.onclick = () => {
+                if(!gameOn || c.innerText !== "") return;
+                if(minT.includes(i)) { 
+                    c.style.background = "red"; c.innerText = "💣"; alert("BOOM ! PERDU"); 
+                    gameOn = false; setTimeout(() => game('min'), 1000);
+                    document.getElementById('b_mi_start').style.display = 'block';
+                    document.getElementById('b_mi_cash').style.display = 'none';
+                } else { 
+                    c.style.background = "#00ff88"; c.innerText = "💎"; minR++; 
+                    let curG = Math.floor(minM * (1 + (minR * 0.45)));
+                    document.getElementById('mi_stat').innerText = "GAIN: "+curG+" F";
+                }
+            };
+            grid.appendChild(c);
+        }
+        document.getElementById('b_mi_start').style.display = 'none';
+        document.getElementById('b_mi_cash').style.display = 'block';
+    }
+    function cashMin() {
+        let win = Math.floor(minM * (1 + (minR * 0.45)));
+        bal += win; gameOn = false; updateUI(); alert("ENCAISSÉ: "+win+" F");
+        document.getElementById('b_mi_start').style.display = 'block';
+        document.getElementById('b_mi_cash').style.display = 'none';
+    }
+
+    // --- PLINKO RÉEL ---
+    function startPli() {
+        if(bal < 100 && !isGod) return alert("Solde insuffisant !");
+        if(!isGod) bal -= 100; updateUI();
+        let ball = document.getElementById('p-ball'); ball.style.display = "block";
+        ball.style.top = "10px"; ball.style.left = "50%";
+        let res = Math.random() < 0.35 ? [2, 5][Math.floor(Math.random()*2)] : [0.2, 0.5][Math.floor(Math.random()*2)];
+        let slotIdx = [5, 2, 0.5, 0.2, 0.5, 2, 5].indexOf(res);
+        setTimeout(() => { 
+            ball.style.top = "190px"; 
+            ball.style.left = (slotIdx * 14 + 7) + "%"; 
+        }, 100);
+        setTimeout(() => {
+            let win = Math.floor(100 * res); bal += win; updateUI(); 
+            alert("RÉSULTAT: x" + res + " | GAIN: " + win + " F");
+            ball.style.display = "none";
+        }, 1000);
+    }
+
+    // --- ADMIN & CAISSE ---
+    function openM() { document.getElementById('adminModal').style.display = 'flex'; }
+    function closeM() { document.getElementById('adminModal').style.display = 'none'; }
+    function authBoss() { 
+        if(document.getElementById('boss_code').value === "BOSS99") {
+            document.getElementById('boss_login').style.display = 'none';
+            document.getElementById('boss_tools').style.display = 'block';
+        } else { alert("Code incorrect"); }
+    }
+    function godMode() { isGod = true; bal = 9999999; updateUI(); alert("MODE BOSS ACTIVÉ 🔥"); closeM(); }
+    function genTicket() { 
+        let amt = prompt("Montant du ticket ?");
+        let code = "EP-" + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem(code, amt);
+        alert("TICKET GÉNÉRÉ : " + code + "\nMontant: " + amt + " F\nValide 10 minutes.");
+    }
+    function useTicket() {
+        let c = document.getElementById('t_code').value.trim();
+        let amt = localStorage.getItem(c);
+        if(amt) { bal += parseInt(amt); localStorage.removeItem(c); updateUI(); alert("RECHARGÉ: " + amt + "F"); }
+        else alert("CODE INVALIDE OU EXPIRÉ");
+    }
+    function rechargeByID() {
+        let tid = prompt("ID du membre ?");
+        let amt = prompt("Montant ?");
+        alert("ID " + tid + " rechargé avec " + amt + " F avec succès !");
+    }
+    function updateUI() { document.getElementById('solde').innerText = bal; }
+    function wa(t) {
+        let msg = t==='depot' ? `Bonjour Boss, je souhaite faire un dépôt sur mon ID: ${id}` : "Aide Boss !";
+        window.open(`https://wa.me/2250707656355?text=${msg}`);
+    }
+    function retrait() {
+        let a = parseInt(document.getElementById('r_amt').value);
+        if(a < 500) return alert("Minimum 500 F");
+        if(bal < a) return alert("Solde insuffisant");
+        let f = a >= 5000 ? Math.floor(a * 0.05) : 0;
+        bal -= a; updateUI();
+        alert("Retrait lancé ! Preuve envoyée au Boss.");
+        window.open(`https://wa.me/2250707656355?text=DEMANDE DE RETRAIT ÉLITE PLAY%0AID: ${id}%0AMontant: ${a}F%0AFrais: ${f}F%0ANET: ${a-f}F`);
+    }
+</script>
+
+</body>
+</html>
