@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BADBOYSOLITAIRE 😈 - Master Empire</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 120px; overflow-x: hidden; user-select: none; }
+        .header { background: #161a1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 900; }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.2rem; }
+        .tabs { display: flex; background: #1c2127; border-bottom: 1px solid #333; overflow-x: auto; }
+        .tab { flex: 1; min-width: 80px; padding: 12px 5px; text-align: center; color: #848e9c; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(255,204,0,0.1); }
+        .game-area { max-width: 420px; margin: 0 auto; padding: 10px; text-align: center; }
+        
+        /* AVIATOR REAL ENGINE */
+        #aviator-display { background: #000; height: 180px; border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 10px; border: 1px solid #333; }
+        #aviator-mult { font-size: 3rem; font-weight: 900; color: var(--gold); position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); }
+        #aviator-plane { position: absolute; bottom: 20px; left: 20px; font-size: 2rem; transition: transform 0.1s linear; }
+
+        /* PLINKO REAL ENGINE */
+        #plinko-display { background: #000; height: 250px; border-radius: 10px; position: relative; margin-bottom: 10px; overflow: hidden; }
+        .plinko-ball { width: 12px; height: 12px; background: var(--gold); border-radius: 50%; position: absolute; top: 10px; left: 50%; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .plinko-slots { display: flex; position: absolute; bottom: 0; width: 100%; gap: 2px; }
+        .p-slot { flex: 1; font-size: 0.6rem; padding: 5px 0; background: #222; border-top: 2px solid var(--gold); }
+
+        /* SPORT */
+        .sport-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #333; text-align: left; }
+        .team-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .team-info { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.85rem; }
+        .team-logo { width: 22px; height: 22px; object-fit: contain; background: #fff; border-radius: 50%; padding: 1px; }
+        .trust-bar-bg { width: 100%; height: 4px; background: #333; border-radius: 2px; margin-bottom: 10px; overflow: hidden; }
+        .trust-bar-fill { height: 100%; background: var(--green); border-radius: 2px; }
+        .odds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .odd-item { background: #2b3139; border: 1px solid #444; border-radius: 6px; padding: 8px 2px; text-align: center; cursor: pointer; font-size: 0.75rem; }
+        
+        /* CASINO */
+        .grid-mines { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: #2b3139; border-radius: 8px; border: none; font-size: 1.4rem; box-shadow: 0 4px 0 #000; }
+        .btn-main { background: linear-gradient(180deg, #ffcc00, #ff9900); border: none; color: black; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; }
+        .footer { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; padding: 15px 0; border-top: 2px solid #333; z-index: 1000; }
+        .btn-wa { background: var(--green); color: black; padding: 10px 15px; border-radius: 10px; font-weight: bold; border: none; font-size: 0.8rem; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.97); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: #1c2127; border: 2px solid var(--gold); padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="authModal" style="display:flex;">
+    <div class="modal-box">
+        <h2 style="color:var(--gold);">BADBOY<span style="color:white">SOLITAIRE 😈</span></h2>
+        <p style="color:gray;">CRÉEZ VOTRE PSEUDO POUR JOUER</p>
+        <input type="text" id="pseudoInput" placeholder="Ex: BadBoy_225" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; background:#000; color:white; border:1px solid #444;">
+        <button class="btn-main" onclick="createAccount()">REJOINDRE LE GANG</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <span onclick="hidePanel()" style="float:right; cursor:pointer;">X</span>
+        <h3>BOSS PANEL 😈</h3>
+        <input type="password" id="adminInput" placeholder="Code secret" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:white;">
+        <button class="btn-main" onclick="checkCode()">OUVRIR</button>
+        <div id="boss-menu" style="display:none; margin-top:20px;">
+            <button class="btn-main" onclick="bossTicket()">🎟️ GÉNÉRER TICKET</button>
+            <button class="btn-main" style="background:var(--red); color:white; margin-top:10px;" onclick="bossGodMode()">🔥 MODE ILLIMITÉ</button>
+        </div>
+    </div>
+</div>
+
+<div class="header">
+    <div onclick="showPanel()"><span id="player-id" style="font-size:0.7rem; color:gray;">ID: ...</span></div>
+    <div class="bal-badge"><span id="solde">0</span> F</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" id="tab-mines" onclick="setGame('mines')">💣 Mines</div>
+    <div class="tab" id="tab-sports" onclick="setGame('sports')">⚽ Sports</div>
+    <div class="tab" id="tab-aviator" onclick="setGame('aviator')">🚀 Aviator</div>
+    <div class="tab" id="tab-plinko" onclick="setGame('plinko')">🎱 Plinko</div>
+</div>
+
+<div class="game-area">
+    <div id="area-mines">
+        <div class="bal-badge" style="margin-bottom:10px; background:none;">GAIN: <span id="mine-pot" style="color:var(--green);">0</span> F</div>
+        <div id="grid-mines" class="grid-mines"></div>
+        <input type="number" id="mise-mines" value="100" style="width:100%; background:#000; color:var(--gold); border:1px solid #444; padding:12px; border-radius:10px; margin-bottom:10px; text-align:center;">
+        <button class="btn-main" id="btn-start-mines" onclick="playMines()">JOUER</button>
+        <button class="btn-main" id="btn-cash-mines" style="display:none; background:var(--green);" onclick="cashOutMines()">ENCAISSER</button>
+    </div>
+
+    <div id="area-aviator" style="display:none;">
+        <div id="aviator-display">
+            <div id="aviator-mult">1.00x</div>
+            <div id="aviator-plane">✈️</div>
+        </div>
+        <button class="btn-main" id="btn-start-av" onclick="playAviator()">PARIER 200F</button>
+        <button class="btn-main" id="btn-cash-av" style="display:none; background:var(--green);" onclick="cashOutAviator()">ENCAISSER</button>
+    </div>
+
+    <div id="area-plinko" style="display:none;">
+        <div id="plinko-display"><div id="p-ball" class="plinko-ball" style="display:none;"></div><div class="plinko-slots">
+            <div class="p-slot">x5</div><div class="p-slot">x2</div><div class="p-slot">x0.5</div><div class="p-slot">x0.2</div><div class="p-slot">x0.5</div><div class="p-slot">x2</div><div class="p-slot">x5</div>
+        </div></div>
+        <button class="btn-main" onclick="playPlinko()">LANCER (100F)</button>
+    </div>
+
+    <div id="area-sports" style="display:none;">
+        <h4 style="color:var(--gold);">TOP MATCHS DU JOUR ⚽</h4>
+        <div id="matches-list"></div>
+    </div>
+</div>
+
+<div class="footer">
+    <button class="btn-wa" onclick="goWa('depot')">DÉPÔT</button>
+    <button class="btn-wa" onclick="claimBonus()" style="background:var(--gold);">🎁 BONUS</button>
+    <button class="btn-wa" style="background:var(--red); color:white" onclick="goWa('retrait')">RETRAIT</button>
+</div>
+
+<script>
+    let bal = 0, active = false, isBoss = false, currentUser = localStorage.getItem('bad_user'), uid = localStorage.getItem('bad_id');
+    let minePot = 0, mineTraps = [], aviIv, aviMult = 1.0;
+
+    function createAccount() {
+        let p = document.getElementById('pseudoInput').value.trim();
+        if(p.length < 3) return alert("Pseudo trop court");
+        uid = "BAD-"+Math.floor(1000+Math.random()*9000);
+        localStorage.setItem('bad_user', p); localStorage.setItem('bad_id', uid);
+        location.reload();
+    }
+    if(currentUser) { 
+        document.getElementById('authModal').style.display='none'; 
+        document.getElementById('player-id').innerText = "ID: " + uid;
+    }
+
+    function setGame(g) {
+        document.querySelectorAll('.game-area > div').forEach(d => d.style.display='none');
+        document.getElementById('area-'+g).style.display='block';
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-'+g).classList.add('active');
+        if(g==='sports') renderSports();
+    }
+
+    // --- AVIATOR REEL ENGINE (LOI 40%) ---
+    function playAviator() {
+        if(bal < 200 && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= 200; ui(); active = true; aviMult = 1.0;
+        document.getElementById('btn-start-av').style.display='none';
+        document.getElementById('btn-cash-av').style.display='block';
+        document.getElementById('aviator-mult').style.color = 'var(--gold)';
+        
+        let crashPoint = Math.random() < 0.6 ? (Math.random()*0.5+1.01) : (Math.random()*3+1.5);
+        
+        aviIv = setInterval(() => {
+            aviMult += 0.02;
+            document.getElementById('aviator-mult').innerText = aviMult.toFixed(2) + "x";
+            document.getElementById('aviator-plane').style.transform = `translate(${aviMult*10}px, -${aviMult*10}px)`;
+            
+            if(aviMult >= crashPoint) {
+                clearInterval(aviIv); active = false;
+                document.getElementById('aviator-mult').innerText = "CRASH !";
+                document.getElementById('aviator-mult').style.color = 'var(--red)';
+                setTimeout(() => { document.getElementById('btn-start-av').style.display='block'; document.getElementById('btn-cash-av').style.display='none'; }, 2000);
+            }
+        }, 100);
+    }
+    function cashOutAviator() { if(!active) return; clearInterval(aviIv); bal += Math.floor(200 * aviMult); ui(); active = false; document.getElementById('btn-start-av').style.display='block'; document.getElementById('btn-cash-av').style.display='none'; }
+
+    // --- PLINKO REEL ENGINE ---
+    function playPlinko() {
+        if(bal < 100 && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= 100; ui();
+        let ball = document.getElementById('p-ball'); ball.style.display='block'; ball.style.top='10px'; ball.style.left='50%';
+        let r = Math.random();
+        let slotIdx = r < 0.6 ? 3 : r < 0.8 ? 2 : 0; // Loi du Casino : Forte chance sur x0.2
+        setTimeout(() => { ball.style.top = '220px'; ball.style.left = (slotIdx * 14 + 10) + '%'; }, 100);
+        setTimeout(() => { bal += Math.floor(100 * [5, 2, 0.5, 0.2, 0.5, 2, 5][slotIdx]); ui(); ball.style.display='none'; }, 1000);
+    }
+
+    // --- MINES 40% ---
+    const gm = document.getElementById('grid-mines');
+    for(let i=0; i<25; i++) { let b = document.createElement('button'); b.className = 'cell'; b.onclick = () => hitMine(i, b); gm.appendChild(b); }
+    function playMines() {
+        let mise = parseInt(document.getElementById('mise-mines').value);
+        if(bal < mise && !isBoss) return alert("Solde insuffisant");
+        if(!isBoss) bal -= mise; ui(); active = true; minePot = mise;
+        document.getElementById('btn-start-mines').style.display='none'; document.getElementById('btn-cash-mines').style.display='block';
+        mineTraps = []; while(mineTraps.length < 3) { let r = Math.floor(Math.random()*25); if(!mineTraps.includes(r)) mineTraps.push(r); }
+        document.querySelectorAll('.cell').forEach(c => { c.innerText=''; c.style.background='#2b3139'; });
+    }
+    function hitMine(i, b) {
+        if(!active) return;
+        if(mineTraps.includes(i) || Math.random() < 0.60) {
+            b.style.background = 'var(--red)'; b.innerText = '💣'; active = false; 
+            setTimeout(() => { document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; }, 1500);
+        } else {
+            b.style.background = 'var(--green)'; b.innerText = '💎';
+            minePot = Math.floor(minePot * 1.35); document.getElementById('mine-pot').innerText = minePot;
+        }
+    }
+    function cashOutMines() { bal += minePot; active = false; document.getElementById('btn-start-mines').style.display='block'; document.getElementById('btn-cash-mines').style.display='none'; ui(); }
+
+    // --- SPORTS ---
+    const sportsData = [
+        { t1:"Real Madrid", l1:"https://upload.wikimedia.org/wikipedia/fr/c/c7/Logo_Real_Madrid.svg", t2:"Barça", l2:"https://upload.wikimedia.org/wikipedia/fr/a/a1/Logo_FC_Barcelona.svg", trust:85, o1:2.10, oN:3.40, o2:3.20 },
+        { t1:"PSG", l1:"https://upload.wikimedia.org/wikipedia/fr/8/86/Paris_Saint-Germain_Logo.svg", t2:"Marseille", l2:"https://upload.wikimedia.org/wikipedia/fr/4/43/Logo_Olympique_de_Marseille.svg", trust:90, o1:1.50, oN:4.20, o2:6.80 }
+    ];
+    function renderSports() {
+        const list = document.getElementById('matches-list'); list.innerHTML = '';
+        sportsData.forEach(m => {
+            list.innerHTML += `<div class="sport-card">
+                <div class="team-line"><div class="team-info"><img src="${m.l1}" class="team-logo">${m.t1}</div><div class="team-info">${m.t2}<img src="${m.l2}" class="team-logo"></div></div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" style="width:${m.trust}%"></div></div>
+                <div class="odds-grid"><div class="odd-item">1<br><b>${m.o1}</b></div><div class="odd-item">N<br><b>${m.oN}</b></div><div class="odd-item">2<br><b>${m.o2}</b></div></div>
+            </div>`;
+        });
+    }
+
+    function ui() { document.getElementById('solde').innerText = isBoss ? "BOSS" : bal; }
+    function claimBonus() { let d = new Date(); if(d.getDay()!==5) return alert("Vendredi uniquement !"); bal+=500; ui(); alert("+500F !"); }
+    function showPanel() { document.getElementById('adminModal').style.display='flex'; }
+    function hidePanel() { document.getElementById('adminModal').style.display='none'; }
+    function checkCode() { if(document.getElementById('adminInput').value === "BOSS99") document.getElementById('boss-menu').style.display='block'; }
+    function bossTicket() { let m = prompt("Montant :"); if(m) alert("BAD-"+m+"-"+(Date.now()+600000).toString(36)+"-Z"); }
+    function bossGodMode() { isBoss=true; ui(); hidePanel(); }
+    function goWa(t) {
+        let num = "2250707656355";
+        if(t==='retrait') {
+            if(bal < 1000) return alert("1000F mini");
+            let m=bal, net=m>=5000?Math.floor(m*0.95):m; if(!isBoss) bal=0; ui();
+            window.location.href=`https://wa.me/${num}?text=RETRAIT%20${uid}%20NET:${net}F`;
+        } else { window.location.href=`https://wa.me/${num}?text=DEPOT%20${uid}`; }
+    }
+</script>
+</body>
+</html>
