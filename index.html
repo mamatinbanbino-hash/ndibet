@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDIBET - Elite Business</title>
+    <style>
+        :root { --gold: #ffcc00; --dark: #0b0e11; --card: #1c2127; --green: #00ff88; --red: #ff4d4d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; }
+        
+        /* HEADER LUXE */
+        .header { background: linear-gradient(180deg, #1c2127 0%, #0b0e11 100%); padding: 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .bal-badge { background: rgba(255, 204, 0, 0.15); padding: 10px 18px; border-radius: 30px; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 1.2rem; box-shadow: inset 0 0 10px rgba(255,204,0,0.1); }
+
+        /* CARRÉ DE GAIN STYLE 1WIN */
+        .gain-display { background: linear-gradient(135deg, rgba(0,255,136,0.2) 0%, rgba(0,0,0,1) 100%); border: 2px solid var(--green); border-radius: 15px; padding: 20px; margin: 20px auto; width: 220px; text-align: center; box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); animation: pulse 2s infinite; }
+        .gain-label { font-size: 0.8rem; color: var(--green); text-transform: uppercase; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
+        .gain-amount { font-size: 2.2rem; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+        /* GRILLE DE JEU */
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px auto; max-width: 360px; padding: 0 15px; }
+        .mine-cell { width: 100%; aspect-ratio: 1; background: linear-gradient(145deg, #2b3139, #1c2127); border-radius: 12px; border: 1px solid #3d444d; font-size: 1.6rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 0 #000; }
+        .mine-cell:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
+        .mine-cell.open { background: var(--green); border-color: #fff; box-shadow: 0 6px 0 #008844; }
+        .mine-cell.boom { background: var(--red); box-shadow: 0 6px 0 #880000; }
+
+        /* RÉGLAGES */
+        .panel { background: var(--card); border-radius: 20px; padding: 20px; margin: 15px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { font-size: 0.8rem; color: #848e9c; font-weight: bold; text-transform: uppercase; margin-left: 5px; }
+        input, select { background: #000; border: 1px solid #444; color: var(--gold); padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box; font-weight: 900; font-size: 1.1rem; margin-top: 8px; outline: none; }
+        input:focus { border-color: var(--gold); }
+
+        .btn-main { background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%); border: none; color: black; padding: 18px; border-radius: 15px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255,153,0,0.3); transition: 0.3s; }
+        .btn-main:hover { transform: scale(1.02); }
+
+        /* NAVIGATION BASSE */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #161a1e; display: flex; justify-content: space-around; align-items: center; padding: 15px 0; border-top: 2px solid #333; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); z-index: 1000; }
+        .nav-btn { color: #848e9c; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; transition: 0.3s; }
+        .nav-btn:hover { color: var(--gold); }
+        .btn-depot-fix { background: var(--green); color: black; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,255,136,0.2); }
+
+        @keyframes pulse { 0% {box-shadow: 0 0 10px rgba(0,255,136,0.2);} 50% {box-shadow: 0 0 25px rgba(0,255,136,0.5);} 100% {box-shadow: 0 0 10px rgba(0,255,136,0.2);} }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div id="logo" style="font-weight: 900; font-size: 1.4rem; letter-spacing: 1px;" onclick="adminBoss()">NDI<span style="color:var(--gold)">BET</span></div>
+    <div class="bal-badge"><span id="solde-display">0</span> F</div>
+</div>
+
+<div style="max-width: 480px; margin: 0 auto; text-align: center;">
+    
+    <div class="gain-display">
+        <div class="gain-label">Gain Actuel</div>
+        <div class="gain-amount" id="potential-val">0 F</div>
+    </div>
+
+    <div class="mines-grid" id="minefield"></div>
+
+    <div class="panel">
+        <div class="input-group">
+            <label>💵 Votre Mise</label>
+            <input type="number" id="bet-input" value="100" min="100" max="10500">
+        </div>
+        <div class="input-group">
+            <label>💣 Nombre de Mines</label>
+            <select id="mine-select">
+                <option value="1">1 Mine (Gain x1.15)</option>
+                <option value="2">2 Mines (Gain x1.35)</option>
+                <option value="3" selected>3 Mines (Gain x1.65)</option>
+                <option value="4">4 Mines (Gain x2.10)</option>
+                <option value="5">5 Mines (Gain x3.00)</option>
+            </select>
+        </div>
+
+        <button id="btn-start" class="btn-main" onclick="initGame()">COMMENCER LE JEU</button>
+        <button id="btn-cashout" class="btn-main" style="display:none; background: var(--green);" onclick="collectGain()">CASH OUT (RÉCUPÉRER)</button>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-btn" onclick="location.reload()">🏠 ACCUEIL</div>
+    <button class="btn-depot-fix" onclick="whatsappContact('depot')">DÉPÔT</button>
+    <div class="nav-item" style="color: #ff4d4d; font-weight: 900; cursor: pointer;" onclick="whatsappContact('retrait')">📥 RETRAIT</div>
+</div>
+
+<script>
+    let balance = 0; 
+    let activeBet = 0; 
+    let isPlaying = false;
+    let minesLoc = []; 
+    let gemsFound = 0; 
+    let currentPot = 0;
+    let bossClicks = 0;
+
+    function sound(t) { let u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; window.speechSynthesis.speak(u); }
+
+    // CRÉATION GRILLE
+    const grid = document.getElementById('minefield');
+    for(let i=0; i<25; i++) {
+        let b = document.createElement('button');
+        b.className = 'mine-cell';
+        b.id = 'tile-' + i;
+        b.onclick = () => tapTile(i, b);
+        grid.appendChild(b);
+    }
+
+    function initGame() {
+        activeBet = parseInt(document.getElementById('bet-input').value);
+        let count = parseInt(document.getElementById('mine-select').value);
+        
+        if(balance < activeBet || activeBet < 100) {
+            sound("Solde insuffisant.");
+            return alert("❌ Solde insuffisant pour cette mise.");
+        }
+        
+        balance -= activeBet;
+        refreshUI();
+        isPlaying = true; gemsFound = 0; currentPot = activeBet;
+        document.getElementById('potential-val').innerText = currentPot + " F";
+        
+        minesLoc = [];
+        while(minesLoc.length < count) {
+            let r = Math.floor(Math.random() * 25);
+            if(!minesLoc.includes(r)) minesLoc.push(r);
+        }
+
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-cashout').style.display = 'block';
+        document.querySelectorAll('.mine-cell').forEach(c => { 
+            c.className = 'mine-cell'; 
+            c.innerText = ''; 
+        });
+        sound("Jeu lancé.");
+    }
+
+    function tapTile(i, b) {
+        if(!isPlaying || b.classList.contains('open')) return;
+
+        if(minesLoc.includes(i)) {
+            b.classList.add('boom'); b.innerText = '💣';
+            isPlaying = false;
+            sound("Boum ! Perdu.");
+            setTimeout(() => stopGame(), 1500);
+        } else {
+            b.classList.add('open'); b.innerText = '💎';
+            gemsFound++;
+            let mCount = parseInt(document.getElementById('mine-select').value);
+            let mult = 1 + (mCount * 0.22); 
+            currentPot = Math.floor(currentPot * mult);
+            document.getElementById('potential-val').innerText = currentPot + " F";
+            sound("Diamant !");
+        }
+    }
+
+    function collectGain() {
+        if(!isPlaying || gemsFound === 0) return;
+        balance += currentPot;
+        sound("Gagné !");
+        stopGame();
+    }
+
+    function stopGame() {
+        isPlaying = false;
+        refreshUI();
+        document.getElementById('potential-val').innerText = "0 F";
+        document.getElementById('btn-start').style.display = 'block';
+        document.getElementById('btn-cashout').style.display = 'none';
+    }
+
+    function refreshUI() {
+        document.getElementById('solde-display').innerText = balance;
+    }
+
+    // FONCTION SECRÈTE BOSS (Dépôt)
+    function adminBoss() {
+        bossClicks++;
+        if(bossClicks === 3) {
+            let p = prompt("ACCÈS BOSS NDIBET :\nEntrez le montant reçu :");
+            if(p) { balance += parseInt(p); refreshUI(); }
+            bossClicks = 0;
+        }
+        setTimeout(() => { bossClicks = 0; }, 2000);
+    }
+
+    // RETRAIT ET DÉPÔT SÉCURISÉ
+    function whatsappContact(mode) {
+        let phone = "2250707656355";
+        let text = "";
+        
+        if(mode === 'depot') {
+            text = "Bonjour Boss, je souhaite recharger mon compte NDIBET.";
+        } else {
+            if(balance <= 0) return alert("❌ Votre solde est de 0 F.");
+            
+            // LA MODIFICATION EST ICI : ON DÉBITE AVANT D'ENVOYER
+            let montantRetrait = balance;
+            balance = 0; // On vide le solde sur le site
+            refreshUI();
+            
+            let idTransac = Math.floor(Math.random() * 999999);
+            text = `DEMANDE DE RETRAIT NDIBET\n--------------------\nMontant : ${montantRetrait} F\nCode de sécurité : #NDI${idTransac}\n--------------------\n(Veuillez joindre la capture d'écran du solde à 0 F comme preuve de débit)`;
+            sound("Demande envoyée.");
+        }
+        
+        window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    }
+</script>
+</body>
+</html>
